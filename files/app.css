@@ -1,0 +1,44 @@
+body {
+    --panel-width: 200px;
+    --app-width: 100vw;
+    --app-height: 100vh;
+}
+
+#left-panel {
+    position: absolute;
+    top: 0;
+    width: var(--panel-width);
+    height: var(--app-height);
+    left: 0;
+    background-color: rgb(40, 42, 66);
+    box-shadow: 0 0 5px black;
+    z-index: 10;
+}
+
+
+#main-panel {
+    position: absolute;
+    width: calc(var(--app-width) - var(--panel-width));
+    height: var(--app-height);
+    top: 0;
+    left: var(--panel-width);
+    background-color: white;
+}
+
+.menu {
+    color: white;
+    padding: 10px;
+}
+
+.menu-item {
+    color: white;
+    padding-left: 20px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.menu-item-active {
+    border: 1px solid white;
+    padding: 10px;
+    border-radius: 5px;
+}
