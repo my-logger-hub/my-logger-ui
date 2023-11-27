@@ -1,4 +1,10 @@
 pub enum LeftMenuState {
-    Home,
-    Settings,
+    Dashboard,
+    Logs,
+}
+
+impl LeftMenuState {
+    pub fn new() -> Self {
+        LeftMenuState::Logs
+    }
 }

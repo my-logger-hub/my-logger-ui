@@ -49,10 +49,15 @@ async fn main() {
 }
 
 fn app(cx: Scope) -> Element {
-    use_shared_state_provider(cx, || LeftMenuState::Home);
+    use_shared_state_provider(cx, || LeftMenuState::new());
+
+    let main_panel = match *use_shared_state(cx).unwrap().read() {
+        LeftMenuState::Dashboard => rsx! { render_dashboard {} },
+        LeftMenuState::Logs => rsx! { render_logs {} },
+    };
 
     render! {
         left_panel {}
-        div { id: "main-panel", main_content {} }
+        div { id: "main-panel", main_panel }
     }
 }

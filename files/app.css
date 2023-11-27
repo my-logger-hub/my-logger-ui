@@ -23,6 +23,7 @@ body {
     top: 0;
     left: var(--panel-width);
     background-color: white;
+    overflow-y: auto;
 }
 
 .menu {
@@ -41,4 +42,66 @@ body {
     border: 1px solid white;
     padding: 10px;
     border-radius: 5px;
+}
+
+
+.red-ball {
+    display: block;
+    width: 10px;
+    height: 10px;
+    background-color: red !important;
+    border-radius: 50%;
+    padding: 0 !important;
+    margin: 0;
+    margin-left: 5px !important;
+}
+
+.dark-red-ball {
+    display: block;
+    width: 10px;
+    height: 10px;
+    background-color: darkred !important;
+    border-radius: 50%;
+    padding: 0 !important;
+    margin: 0;
+    margin-left: 5px !important;
+}
+
+.orange-ball {
+    display: block;
+    width: 10px;
+    height: 10px;
+    background-color: orange !important;
+    border-radius: 50%;
+    padding: 0 !important;
+    margin: 0;
+    margin-left: 5px !important;
+
+}
+
+.green-ball {
+    display: block;
+    width: 10px;
+    height: 10px;
+    background-color: green !important;
+    border-radius: 50%;
+    padding: 0 !important;
+    margin: 0;
+    margin-left: 5px !important;
+}
+
+.yellow-ball {
+    display: block;
+    width: 10px;
+    height: 10px;
+    background-color: yellow !important;
+    border-radius: 50%;
+    padding: 0 !important;
+    margin: 0;
+    margin-left: 5px !important;
+}
+
+.form-control {
+    border-radius: 0 5px 5px 0;
+    border: 1px solid lightgray;
 }

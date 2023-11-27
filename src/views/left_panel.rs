@@ -6,15 +6,15 @@ const CLASS_NAME: &str = "menu-item-active";
 pub fn left_panel(cx: Scope) -> Element {
     let left_panel_state = use_shared_state::<LeftMenuState>(cx).unwrap();
 
-    let mut home_active = "";
-    let mut settings_active = "";
+    let mut dashboard_active = "";
+    let mut logs_active = "";
 
     match *left_panel_state.read() {
-        LeftMenuState::Home => {
-            home_active = CLASS_NAME;
+        LeftMenuState::Dashboard => {
+            dashboard_active = CLASS_NAME;
         }
-        LeftMenuState::Settings => {
-            settings_active = CLASS_NAME;
+        LeftMenuState::Logs => {
+            logs_active = CLASS_NAME;
         }
     }
 
@@ -24,18 +24,18 @@ pub fn left_panel(cx: Scope) -> Element {
             br {}
             div { style: "padding: 5px",
                 div {
-                    class: "menu-item {home_active}",
+                    class: "menu-item {dashboard_active}",
                     onclick: move |_| {
-                        *left_panel_state.write() = LeftMenuState::Home;
+                        *left_panel_state.write() = LeftMenuState::Dashboard;
                     },
-                    "Home"
+                    "Dashboard"
                 }
                 div {
-                    class: "menu-item {settings_active}",
+                    class: "menu-item {logs_active}",
                     onclick: move |_| {
-                        *left_panel_state.write() = LeftMenuState::Settings;
+                        *left_panel_state.write() = LeftMenuState::Logs;
                     },
-                    "Settings"
+                    "Logs"
                 }
             }
         }
