@@ -150,7 +150,7 @@ pub fn render_logs(cx: Scope) -> Element {
 
             tr { style: "border-top: 1px solid lightgray;",
                 td { div { class: style } }
-                td { style: "margin:0;padding:0", "{dt.to_rfc3339()}" }
+                td { style: "margin:0;padding:0", "{&dt.to_rfc3339()[..26]}" }
                 td { style: "margin:0;padding:0", "{itm.process_name}" }
                 td { style: "margin:0;padding:0", "{itm.message}" }
                 td { key_values.into_iter() }
