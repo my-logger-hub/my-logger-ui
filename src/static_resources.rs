@@ -26,17 +26,17 @@ pub fn get_header_content() -> String {
     )
 }
 
-pub fn get_html(addr: SocketAddr) -> String {
+pub fn get_html(host: &str) -> String {
     let header_content = get_header_content();
     format!(
         r#"
             <!DOCTYPE html>
             <html>
-                <head> <title>Logs</title> {header_content} </head>
+                <head> <title>CFD web terminal</title> {header_content} </head>
                 <body style:"--show-panel-offset:0"> <div id="main"></div> </body>
                 {glue}
             </html>
             "#,
-        glue = dioxus_liveview::interpreter_glue(&format!("ws://{addr}/ws"))
+        glue = dioxus_liveview::interpreter_glue(&format!("{host}/ws"))
     )
 }
