@@ -1,5 +1,3 @@
-use std::net::SocketAddr;
-
 pub const BOOTSTRAP_CSS: &[u8] = std::include_bytes!("../files/styled.css");
 pub const APP_CSS: &[u8] = std::include_bytes!("../files/app.css");
 pub const APP_JS: &[u8] = std::include_bytes!("../files/app.js");
@@ -11,7 +9,7 @@ pub fn get_header_content() -> String {
 
     format!(
         r#"
-        <link rel="icon" type="image/x-icon" href="/img/favicon.png">
+        <link rel="icon" type="image/x-icon" href="/favicon.png">
     <script>
         {app_js_str}
     </script>
@@ -32,7 +30,7 @@ pub fn get_html(host: &str) -> String {
         r#"
             <!DOCTYPE html>
             <html>
-                <head> <title>CFD web terminal</title> {header_content} </head>
+                <head> <title>My Logger</title> {header_content} </head>
                 <body style:"--show-panel-offset:0"> <div id="main"></div> </body>
                 {glue}
             </html>
