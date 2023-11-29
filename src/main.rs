@@ -14,6 +14,7 @@ use salvo::serve_static::StaticDir;
 mod app_ctx;
 mod grpc_client;
 mod http_server;
+mod log_event_context_parser;
 mod settings_reader;
 mod states;
 mod static_resources;

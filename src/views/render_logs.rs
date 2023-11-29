@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 
 use crate::{
-    my_logger_grpc::{LogEventGrpcModel, LogLevelGrpcModel, ReadLogEventRequest},
+    my_logger_grpc::{LogEventContext, LogEventGrpcModel, LogLevelGrpcModel, ReadLogEventRequest},
     APP_CTX,
 };
 
@@ -29,10 +29,10 @@ impl HoursAgo {
 
 pub fn render_logs(cx: Scope) -> Element {
     let logs_state: &UseState<Option<Vec<Rc<LogEventGrpcModel>>>> = use_state(cx, || None);
-
     let log_level_filter: &UseState<SelectedLevel> = use_state(cx, || SelectedLevel::All);
-
     let hours_ago_filter: &UseState<HoursAgo> = use_state(cx, || HoursAgo(2));
+
+    let ctx_filter: &UseState<String> = use_state(cx, || "".to_string());
 
     let log_state_value = logs_state.get();
 
@@ -91,15 +91,26 @@ pub fn render_logs(cx: Scope) -> Element {
                         span { class: "input-group-text", "Key Value Filter:" }
                         input {
                             class: "form-control",
-                            placeholder: "Example: Application='MyApp' AND Version='Version'"
+                            placeholder: "Example: Application='MyApp' ; Version='Version'",
+                            value: "{ctx_filter.get()}",
+                            oninput: |e| {
+                                ctx_filter.set(e.value.to_string());
+                            }
                         }
                     }
                 }
                 td {
                     button {
                         class: "btn btn-primary btn-sm",
+
                         onclick: move |_| {
-                            logs_state.set(None);
+                            load(
+                                &cx,
+                                log_level_filter.get().clone(),
+                                hours_ago_filter.get().get_value(),
+                                logs_state,
+                                crate::log_event_context_parser::parse_key_value_from_string(ctx_filter.get()),
+                            );
                         },
                         "Get data"
                     }
@@ -114,6 +125,7 @@ pub fn render_logs(cx: Scope) -> Element {
             log_level_filter.get().clone(),
             hours_ago_filter.get().get_value(),
             logs_state,
+            crate::log_event_context_parser::parse_key_value_from_string(ctx_filter.get()),
         );
         return render! {
             panel,
@@ -142,7 +154,23 @@ pub fn render_logs(cx: Scope) -> Element {
             .map(|ctx| {
                 let key = ctx.key.to_string();
                 let value = ctx.value.to_string();
-                rsx! { div { style: "margin:0;padding:0", "{key}: '{value}'" } }
+                rsx! {
+                    div {
+                        style: "margin:0;padding:0; cursor:pointer;",
+                        onclick: move |_| {
+                            let mut filter = ctx_filter.get().trim().to_string();
+                            if !filter.is_empty() {
+                                filter.push_str(" and ");
+                            }
+                            filter.push_str(key.as_str());
+                            filter.push_str(":'");
+                            filter.push_str(value.as_str());
+                            filter.push_str("'");
+                            ctx_filter.set(filter);
+                        },
+                        "{key}: '{value}'"
+                    }
+                }
             })
             .collect();
 
@@ -177,9 +205,13 @@ fn load<'s>(
     cx: &'s Scope<'s>,
     log_level_filter: SelectedLevel,
     hours_before: i64,
+
     logs_state: &UseState<Option<Vec<Rc<LogEventGrpcModel>>>>,
+    context_keys: Vec<LogEventContext>,
 ) {
     let logs_state = logs_state.to_owned();
+
+    println!("{:?}", context_keys);
 
     cx.spawn(async move {
         let grpc_client = APP_CTX.get_my_logger_grpc_client().await;
@@ -203,7 +235,7 @@ fn load<'s>(
                 from_time: from_time.unix_microseconds,
                 to_time: 0,
                 levels,
-                context_keys: vec![],
+                context_keys,
                 take: 200,
                 skip: 0,
             })

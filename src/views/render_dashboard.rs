@@ -1,10 +1,7 @@
 use dioxus::prelude::*;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 
-use crate::{
-    my_logger_grpc::{ReadLogEventRequest, StatisticData},
-    APP_CTX,
-};
+use crate::{my_logger_grpc::*, APP_CTX};
 
 pub fn render_dashboard(cx: Scope) -> Element {
     let data: &UseState<Option<StatisticData>> = use_state(cx, || None);
@@ -91,14 +88,10 @@ fn request_data<'s>(cx: &'s Scope<'s>, data: &UseState<Option<StatisticData>>, h
         from_time.add_hours(-hours);
 
         let a = grpc_client
-            .get_statistic(ReadLogEventRequest {
+            .get_statistic(GetStatisticsRequest {
                 tenant_id: "Default".to_string(),
                 from_time: from_time.unix_microseconds,
                 to_time: 0,
-                levels: vec![],
-                context_keys: vec![],
-                skip: 0,
-                take: 0,
             })
             .await
             .unwrap();
