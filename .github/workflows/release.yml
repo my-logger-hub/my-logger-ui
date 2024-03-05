@@ -70,7 +70,15 @@ jobs:
     runs-on: ubuntu-22.04   
     steps:    
       - name: Check out the repository
-        uses: actions/checkout@v3    
+        uses: actions/checkout@v3
+        
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::$(echo ${GITHUB_REF_NAME})
+
+      - name: Updating version
+        run: sed -i -e 's/^version = .*/version = "${{ steps.get_version.outputs.VERSION }}"/' Cargo.toml
+        
 
       - name: Docker login
         run: |          
