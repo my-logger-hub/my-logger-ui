@@ -29,8 +29,8 @@ jobs:
         uses: arduino/setup-protoc@v1
 
       - run: openssl version
-
-      - run: cargo add dioxus@0.5.0-alpha.0 --features fullstack
+      
+      - run: sudo apt-get install nasm
 
       - run: cargo install dioxus-cli@0.5.0-alpha.0
 
