@@ -47,7 +47,7 @@ jobs:
 
 #      - run: sudo apt-get install javascriptcoregtk-4.1 libsoup-3.0 webkit2gtk-4.1 -y
 
-      - run: dx build --platform fullstack --release
+   #   - run: dx build --platform fullstack --release
 
       - name: Docker login
         run: |          
