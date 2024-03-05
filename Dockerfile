@@ -1,4 +1,4 @@
-FROM dioxus-alpha:0.1.0
+FROM myjettools/dioxus-alpha:0.1.0
 COPY ./target ./target
 COPY ./files ./files
 COPY ./dist ./dist

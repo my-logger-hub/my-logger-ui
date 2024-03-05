@@ -13,9 +13,9 @@ jobs:
       image: myjettools/dioxus-alpha:0.1.0
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
+#      - uses: actions-rs/toolchain@v1
+#        with:
+#          toolchain: stable
 
 
       - name: Get the version
