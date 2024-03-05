@@ -3,24 +3,23 @@ use std::rc::Rc;
 use dioxus::prelude::*;
 use serde::*;
 
-use crate::{dialogs::DialogState, render_log_ball, LogApiLevel};
+use crate::{dialogs::DialogState, main_state::MainState, render_log_ball, LogApiLevel};
 
 pub fn render_settings() -> Element {
     let mut dialog_state = consume_context::<Signal<DialogState>>();
 
-    let widget_state: Signal<Option<Vec<Rc<IgnoreEventApiModel>>>, _> = use_signal(|| None);
+    let main_state = consume_context::<Signal<MainState>>();
 
-    let read = widget_state.read();
+    let ignore_events = main_state.read().unwrap_ignore_events();
 
-    let content = match read.as_ref() {
+    let content = match ignore_events {
         Some(value) => {
             let table_content: Vec<_> = value
-                .iter()
-                .map(|itm: &Rc<IgnoreEventApiModel>| {
+                .into_iter()
+                .map(|itm| {
                     let level = format!("{:?}", itm.level);
                     let log_ball = render_log_ball(itm.level.clone());
 
-                    let delete_item: Rc<IgnoreEventApiModel> = itm.clone();
                     rsx! {
                         tr {
                             td { {log_ball} }
@@ -33,7 +32,7 @@ pub fn render_settings() -> Element {
                                     style: "padding:2px 6px",
 
                                     onclick: move |_| {
-                                        dialog_state.set(DialogState::DeleteConfirmation(delete_item.clone()));
+                                        dialog_state.set(DialogState::DeleteConfirmation(itm.clone()));
                                     },
                                     "Delete"
                                 }
@@ -50,7 +49,16 @@ pub fn render_settings() -> Element {
                         th { "Level" }
                         th { "Application" }
                         th { "Marker" }
-                        th {}
+                        th {
+                            button {
+                                class: "btn btn-sm btn-primary",
+                                style: "padding:2px 6px",
+                                onclick: move |_| {
+                                    dialog_state.set(DialogState::AddIgnoreEvent);
+                                },
+                                "Add"
+                            }
+                        }
                     }
 
                     {table_content.into_iter()}
@@ -58,7 +66,7 @@ pub fn render_settings() -> Element {
             }
         }
         None => {
-            load_ignore_events(&widget_state);
+            load_ignore_events(&main_state);
             return rsx! { h1 { "Loading" } };
         }
     };
@@ -83,17 +91,15 @@ pub struct IgnoreEventApiModel {
     pub marker: String,
 }
 
-fn load_ignore_events<'s>(
-    widget_state: &Signal<Option<Vec<Rc<IgnoreEventApiModel>>>, UnsyncStorage>,
-) {
-    let mut widget_state = widget_state.to_owned();
+fn load_ignore_events(main_state: &Signal<MainState>) {
+    let mut main_state = main_state.to_owned();
 
     spawn(async move {
         let result = get_ignore_events().await.unwrap();
 
         let result = result.into_iter().map(|itm| Rc::new(itm)).collect();
 
-        widget_state.set(Some(result));
+        main_state.set(MainState::Settings(Some(result)));
     });
 }
 
@@ -121,3 +127,15 @@ pub async fn get_ignore_events() -> Result<Vec<IgnoreEventApiModel>, ServerFnErr
 
     Ok(result)
 }
+
+/*
+
+         button {
+                                class: "btn btn-sm btn-primary",
+                                style: "padding:2px 6px",
+                                onclick: move |_| {
+                                    dialog_state.set(DialogState::AddIgnoreEvent);
+                                },
+                                "Add"
+                            }
+*/

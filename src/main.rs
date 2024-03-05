@@ -41,7 +41,7 @@ fn main() {
 }
 
 fn app() -> Element {
-    use_context_provider(|| Signal::new(MainState::Settings));
+    use_context_provider(|| Signal::new(MainState::Settings(None)));
     use_context_provider(|| Signal::new(DialogState::None));
 
     let main_state = consume_context::<Signal<MainState>>();
@@ -51,7 +51,7 @@ fn app() -> Element {
     let right_panel = match main_state_value.clone() {
         MainState::Dashboard => rsx! { render_dashboard {} },
         MainState::Logs => rsx! { render_logs {} },
-        MainState::Settings => rsx! { render_settings {} },
+        MainState::Settings(_) => rsx! { render_settings {} },
     };
 
     rsx! {

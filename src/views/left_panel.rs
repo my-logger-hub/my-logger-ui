@@ -19,7 +19,7 @@ pub fn LeftPanel() -> Element {
             logs_active = CLASS_NAME;
         }
 
-        MainState::Settings => {
+        MainState::Settings(_) => {
             settings_active = CLASS_NAME;
         }
     }
@@ -46,7 +46,7 @@ pub fn LeftPanel() -> Element {
             div {
                 class: "menu-item {settings_active}",
                 onclick: move |_| {
-                    main_state.set(MainState::Settings);
+                    main_state.set(MainState::Settings(None));
                 },
                 "Settings"
             }

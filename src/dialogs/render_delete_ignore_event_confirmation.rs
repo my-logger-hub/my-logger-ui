@@ -1,4 +1,4 @@
-use crate::IgnoreEventApiModel;
+use crate::{main_state::MainState, IgnoreEventApiModel};
 use dioxus::prelude::*;
 use std::rc::Rc;
 
@@ -6,9 +6,11 @@ use super::DialogState;
 
 pub fn render_delete_ignore_event_confirmation(
     model: Rc<IgnoreEventApiModel>,
+    main_state: &Signal<MainState>,
     dialog_state: &Signal<DialogState>,
 ) -> Element {
     let mut dialog_state = dialog_state.to_owned();
+    let mut main_state = main_state.to_owned();
     let phrase = format!(
         "Are you sure you want to delete the ignore event for {:?} for application {} with marker{} ?",
         model.level,
@@ -27,6 +29,7 @@ pub fn render_delete_ignore_event_confirmation(
                         let itm_to_request = model.as_ref().clone();
                         spawn(async move {
                             delete_ignore_event(itm_to_request).await.unwrap();
+                            main_state.set(MainState::Settings(None));
                             dialog_state.set(DialogState::None)
                         });
                     },
