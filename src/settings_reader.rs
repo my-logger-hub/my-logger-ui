@@ -1,21 +1,21 @@
-use serde::{Deserialize, Serialize};
-
 use crate::grpc_client::*;
 
-#[derive(my_settings_reader::SettingsModel, Serialize, Deserialize, Debug, Clone)]
-pub struct SettingsModel {
-    #[serde(rename = "MyLoggerGrpcUrl")]
-    pub my_logger_grpc_url: String,
-}
+pub struct SettingsReader;
 
 #[async_trait::async_trait]
 impl my_grpc_extensions::GrpcClientSettings for SettingsReader {
     async fn get_grpc_url(&self, name: &'static str) -> String {
         if name == MyLoggerGrpcClient::get_service_name() {
-            let read_access = self.settings.read().await;
-            return read_access.my_logger_grpc_url.clone();
+            return read_env_variable("SETTINGS_SERVICE_GRPC_URL");
         }
 
         panic!("Unknown grpc service name: {}", name)
+    }
+}
+
+fn read_env_variable(name: &str) -> String {
+    match std::env::var(name) {
+        Ok(url) => return url,
+        Err(_) => panic!("{} is not set", name),
     }
 }

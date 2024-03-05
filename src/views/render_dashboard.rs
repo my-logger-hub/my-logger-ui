@@ -1,22 +1,20 @@
 use dioxus::prelude::*;
-use rust_extensions::date_time::DateTimeAsMicroseconds;
+use serde::{Deserialize, Serialize};
 
-use crate::{my_logger_grpc::*, APP_CTX};
+pub fn render_dashboard() -> Element {
+    let mut data: Signal<Option<DashboardItem>, _> = use_signal(|| None);
 
-pub fn render_dashboard(cx: Scope) -> Element {
-    let data: &UseState<Option<StatisticData>> = use_state(cx, || None);
-
-    let selected_state = use_state(cx, || 69i64);
-
-    let data_access = data.get();
+    let mut selected_state = use_signal(|| 60i64);
 
     let select = rsx! {
         select {
             class: "form-control",
+            value: selected_state.read().to_string(),
             onchange: move |e| {
-                let value = e.value.parse::<i64>().unwrap();
+                let value = e.value().parse::<i64>().unwrap();
                 selected_state.set(value);
-                request_data(&cx, data, *selected_state.get());
+                data.set(None);
+                request_data(&mut data, &selected_state);
             },
             option { value: "60", "1 Hour" }
             option { value: "120", "2 Hours" }
@@ -26,14 +24,17 @@ pub fn render_dashboard(cx: Scope) -> Element {
         }
     };
 
-    if data_access.is_none() {
-        request_data(&cx, data, *selected_state.get());
-        return render! {
-            select,
+    //let data_access = data.get();
+    if data.read().is_none() {
+        request_data(&mut data, &selected_state);
+
+        return rsx! {
+            {select},
             h1 { "Loading..." }
         };
     }
 
+    let data_access = data.read();
     let data_access = data_access.as_ref().unwrap();
 
     let mut javascript = format!(
@@ -69,15 +70,16 @@ pub fn render_dashboard(cx: Scope) -> Element {
       });"#,
     );
 
-    render! {
-        select,
+    rsx! {
+        {select},
         div { style: "width:400px; height:400px",
             canvas { id: "myChart", style: "width:400px; height:400px" }
-            script { javascript }
+            script { {javascript} }
         }
     }
 }
 
+/*
 fn request_data<'s>(cx: &'s Scope<'s>, data: &UseState<Option<StatisticData>>, hours: i64) {
     let data = data.to_owned();
     cx.spawn(async move {
@@ -98,4 +100,56 @@ fn request_data<'s>(cx: &'s Scope<'s>, data: &UseState<Option<StatisticData>>, h
 
         data.set(Some(a));
     });
+}
+ */
+
+fn request_data(
+    data: &mut Signal<Option<DashboardItem>, UnsyncStorage>,
+    selected_state: &Signal<i64, UnsyncStorage>,
+) {
+    let mut data = data.to_owned();
+
+    let minutes_before = *selected_state.read();
+
+    spawn(async move {
+        let result = get_dashboard(minutes_before).await.unwrap();
+        data.set(Some(result));
+    });
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct DashboardItem {
+    pub info_count: usize,
+    pub warning_count: usize,
+    pub error_count: usize,
+    pub fatal_count: usize,
+    pub debug_count: usize,
+}
+
+#[server]
+pub async fn get_dashboard(minutes_before: i64) -> Result<DashboardItem, ServerFnError> {
+    use crate::my_logger_grpc::*;
+    use rust_extensions::date_time::DateTimeAsMicroseconds;
+
+    let mut from_time = DateTimeAsMicroseconds::now();
+
+    from_time.add_minutes(-minutes_before);
+
+    let result = crate::APP_CTX
+        .grpc_client
+        .get_statistic(GetStatisticsRequest {
+            tenant_id: "Default".to_string(),
+            from_time: from_time.unix_microseconds,
+            to_time: 0,
+        })
+        .await
+        .unwrap();
+
+    Ok(DashboardItem {
+        info_count: result.info_count as usize,
+        warning_count: result.warning_count as usize,
+        error_count: result.error_count as usize,
+        fatal_count: result.fatal_count as usize,
+        debug_count: result.debug_count as usize,
+    })
 }

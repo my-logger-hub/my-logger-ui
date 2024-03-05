@@ -1,4 +1,4 @@
-use crate::my_logger_grpc::LogEventContext;
+use crate::LogEventContextApiModel;
 
 enum SeparatorType {
     SingleChar,
@@ -15,7 +15,7 @@ enum ParseMode {
     AwaitingForSeparatorEnd,
 }
 
-pub fn parse_key_value_from_string(src: &str) -> Vec<LogEventContext> {
+pub fn parse_key_value_from_string(src: &str) -> Vec<LogEventContextApiModel> {
     let mut mode = ParseMode::AwaitingForKey;
 
     let mut key = None;
@@ -47,7 +47,7 @@ pub fn parse_key_value_from_string(src: &str) -> Vec<LogEventContext> {
                     let value = into_string(&bytes[start_from..no]);
                     let key = key.take().unwrap();
 
-                    result.push(LogEventContext { key, value });
+                    result.push(LogEventContextApiModel { key, value });
 
                     if let Some(separator_type) = is_separator_started(*b) {
                         match separator_type {
@@ -91,7 +91,7 @@ pub fn parse_key_value_from_string(src: &str) -> Vec<LogEventContext> {
             let value = into_string(&bytes[start_from..bytes.len()]);
             let key = key.take().unwrap();
 
-            result.push(LogEventContext { key, value });
+            result.push(LogEventContextApiModel { key, value });
         }
         ParseMode::AwaitingForSeparatorStart => {}
         ParseMode::AwaitingForSeparatorEnd => {}

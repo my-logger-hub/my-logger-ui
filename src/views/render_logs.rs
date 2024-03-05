@@ -1,12 +1,11 @@
 use std::rc::Rc;
 
 use dioxus::prelude::*;
-use rust_extensions::date_time::DateTimeAsMicroseconds;
 
-use crate::{
-    my_logger_grpc::{LogEventContext, LogEventGrpcModel, LogLevelGrpcModel, ReadLogEventRequest},
-    APP_CTX,
-};
+use rust_extensions::date_time::DateTimeAsMicroseconds;
+use serde::{Deserialize, Serialize};
+
+use crate::views::render_log_ball;
 
 #[derive(Debug, Clone, Copy)]
 pub enum SelectedLevel {
@@ -27,16 +26,22 @@ impl HoursAgo {
     }
 }
 
-pub fn render_logs(cx: Scope) -> Element {
-    let logs_state: &UseState<Option<Vec<Rc<LogEventGrpcModel>>>> = use_state(cx, || None);
-    let log_level_filter: &UseState<SelectedLevel> = use_state(cx, || SelectedLevel::All);
-    let hours_ago_filter: &UseState<HoursAgo> = use_state(cx, || HoursAgo(2));
+pub fn render_logs() -> Element {
+    let mut logs_state: Signal<Option<Vec<Rc<LogApiItem>>>, _> = use_signal(|| None);
+    let mut log_level_filter: Signal<SelectedLevel, _> = use_signal(|| SelectedLevel::All);
+    let mut hours_ago_filter: Signal<HoursAgo, _> = use_signal(|| HoursAgo(2));
 
-    let ctx_filter: &UseState<String> = use_state(cx, || "".to_string());
+    let mut ctx_filter: Signal<String, _> = use_signal(|| "".to_string());
 
-    let log_state_value = logs_state.get();
+    let log_state_value = logs_state.read().clone();
 
-    let log_level_value_as_str = format!("{:?}", log_level_filter.get());
+    let log_level_value_as_str = format!("{:?}", log_level_filter.clone());
+
+    let hours_ago_value = hours_ago_filter.read().clone();
+
+    let ctx_filter_value = Rc::new(ctx_filter.read().clone());
+
+    let ctx_filter_panel_value = ctx_filter_value.clone();
 
     let panel = rsx! {
 
@@ -51,7 +56,7 @@ pub fn render_logs(cx: Scope) -> Element {
                             class: "form-control",
 
                             onchange: move |e| {
-                                match e.value.as_str() {
+                                match e.value().as_str() {
                                     "Info" => log_level_filter.set(SelectedLevel::Info),
                                     "Warning" => log_level_filter.set(SelectedLevel::Warning),
                                     "Error" => log_level_filter.set(SelectedLevel::Error),
@@ -77,9 +82,9 @@ pub fn render_logs(cx: Scope) -> Element {
                             style: "width: 70px",
                             class: "form-control",
                             r#type: "number",
-                            value: "{hours_ago_filter.get().get_value()}",
+                            value: "{hours_ago_value.get_value()}",
                             oninput: move |e| {
-                                if let Ok(value) = e.value.parse::<i64>() {
+                                if let Ok(value) = e.value().parse::<i64>() {
                                     hours_ago_filter.set(HoursAgo(value));
                                 }
                             }
@@ -92,9 +97,9 @@ pub fn render_logs(cx: Scope) -> Element {
                         input {
                             class: "form-control",
                             placeholder: "Example: Application='MyApp' ; Version='Version'",
-                            value: "{ctx_filter.get()}",
-                            oninput: |e| {
-                                ctx_filter.set(e.value.to_string());
+                            value: "{ctx_filter_value}",
+                            oninput: move |e| {
+                                ctx_filter.set(e.value());
                             }
                         }
                     }
@@ -104,12 +109,14 @@ pub fn render_logs(cx: Scope) -> Element {
                         class: "btn btn-primary btn-sm",
 
                         onclick: move |_| {
+                            logs_state.set(None);
                             load(
-                                &cx,
-                                log_level_filter.get().clone(),
-                                hours_ago_filter.get().get_value(),
-                                logs_state,
-                                crate::log_event_context_parser::parse_key_value_from_string(ctx_filter.get()),
+                                log_level_filter.read().clone(),
+                                hours_ago_filter.read().get_value(),
+                                &logs_state,
+                                crate::log_event_context_parser::parse_key_value_from_string(
+                                    ctx_filter_panel_value.as_str(),
+                                ),
                             );
                         },
                         "Get data"
@@ -121,32 +128,26 @@ pub fn render_logs(cx: Scope) -> Element {
 
     if log_state_value.is_none() {
         load(
-            &cx,
-            log_level_filter.get().clone(),
-            hours_ago_filter.get().get_value(),
-            logs_state,
-            crate::log_event_context_parser::parse_key_value_from_string(ctx_filter.get()),
+            log_level_filter.read().clone(),
+            hours_ago_filter.read().get_value(),
+            &logs_state,
+            crate::log_event_context_parser::parse_key_value_from_string(ctx_filter_value.as_str()),
         );
-        return render! {
-            panel,
+
+        return rsx! {
+            {panel},
             h1 { "Loading" }
         };
     }
 
-    let log_state_value = log_state_value.as_ref().unwrap();
+    let log_state_value = log_state_value.unwrap();
+
+    //let ctx_filter_value = ctx_filter_value.clone();
 
     let items = log_state_value.iter().map(|itm| {
         let itm = itm.clone();
 
         let dt = DateTimeAsMicroseconds::new(itm.timestamp);
-
-        let style = match itm.level() {
-            crate::my_logger_grpc::LogLevelGrpcModel::Info => "green-ball",
-            crate::my_logger_grpc::LogLevelGrpcModel::Warning => "orange-ball",
-            crate::my_logger_grpc::LogLevelGrpcModel::Error => "red-ball",
-            crate::my_logger_grpc::LogLevelGrpcModel::Fatal => "dark-red-ball",
-            crate::my_logger_grpc::LogLevelGrpcModel::Debug => "yellow-ball",
-        };
 
         let key_values: Vec<_> = itm
             .ctx
@@ -154,11 +155,12 @@ pub fn render_logs(cx: Scope) -> Element {
             .map(|ctx| {
                 let key = ctx.key.to_string();
                 let value = ctx.value.to_string();
+                let ctx_filter_value = ctx_filter_value.clone();
                 rsx! {
                     div {
                         style: "margin:0;padding:0; cursor:pointer;",
                         onclick: move |_| {
-                            let mut filter = ctx_filter.get().trim().to_string();
+                            let mut filter = ctx_filter_value.trim().to_string();
                             if !filter.is_empty() {
                                 filter.push_str(" and ");
                             }
@@ -173,21 +175,20 @@ pub fn render_logs(cx: Scope) -> Element {
                 }
             })
             .collect();
-
+        let log_ball = render_log_ball(itm.level.clone());
         rsx! {
-
             tr { style: "border-top: 1px solid lightgray;",
-                td { div { class: style } }
+                td { {log_ball} }
                 td { style: "margin:0;padding:0", "{&dt.to_rfc3339()[..26]}" }
                 td { style: "margin:0;padding:0", "{itm.process_name}" }
                 td { style: "margin:0;padding:0", "{itm.message}" }
-                td { key_values.into_iter() }
+                td { {key_values.into_iter()} }
             }
         }
     });
 
-    render! {
-        panel,
+    rsx! {
+        {panel},
         table { class: "table table-striped", style: "margin-top:36px",
             tr {
                 th { style: "width: 24px;" }
@@ -196,11 +197,144 @@ pub fn render_logs(cx: Scope) -> Element {
                 th { "Message" }
                 th { "Context" }
             }
-            items
+            {items}
         }
     }
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub enum LogApiLevel {
+    Info,
+    Warning,
+    Error,
+    FatalError,
+    Debug,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LogApiItem {
+    pub timestamp: i64,
+    pub tenant_id: String,
+    pub process_name: String,
+    pub message: String,
+    pub level: LogApiLevel,
+    pub ctx: Vec<LogEventContextApiModel>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LogEventContextApiModel {
+    pub key: String,
+    pub value: String,
+}
+
+fn load<'s>(
+    log_level_filter: SelectedLevel,
+    hours_before: i64,
+    logs_state: &Signal<Option<Vec<Rc<LogApiItem>>>, UnsyncStorage>,
+    context_keys: Vec<LogEventContextApiModel>,
+) {
+    let mut logs_state = logs_state.to_owned();
+
+    let level = match log_level_filter {
+        SelectedLevel::All => None,
+        SelectedLevel::Info => Some(LogApiLevel::Info),
+        SelectedLevel::Warning => Some(LogApiLevel::Warning),
+        SelectedLevel::Error => Some(LogApiLevel::Error),
+        SelectedLevel::FatalError => Some(LogApiLevel::FatalError),
+        SelectedLevel::Debug => Some(LogApiLevel::Debug),
+    };
+
+    let context_keys = if context_keys.is_empty() {
+        None
+    } else {
+        Some(context_keys)
+    };
+
+    spawn(async move {
+        let result = load_logs(level, hours_before, context_keys).await.unwrap();
+
+        let result = result.into_iter().map(|itm| Rc::new(itm)).collect();
+
+        logs_state.set(Some(result));
+    });
+}
+
+#[server]
+pub async fn load_logs(
+    level: Option<LogApiLevel>,
+    hours_before: i64,
+    ctx: Option<Vec<LogEventContextApiModel>>,
+) -> Result<Vec<LogApiItem>, ServerFnError> {
+    use crate::my_logger_grpc::*;
+
+    let mut from_time = DateTimeAsMicroseconds::now();
+
+    from_time.add_hours(-hours_before);
+
+    let levels = if let Some(level) = level {
+        match level {
+            LogApiLevel::Info => vec![LogLevelGrpcModel::Info as i32],
+            LogApiLevel::Warning => vec![LogLevelGrpcModel::Warning as i32],
+            LogApiLevel::Error => vec![LogLevelGrpcModel::Error as i32],
+            LogApiLevel::FatalError => vec![LogLevelGrpcModel::Fatal as i32],
+            LogApiLevel::Debug => vec![LogLevelGrpcModel::Debug as i32],
+        }
+    } else {
+        vec![]
+    };
+
+    let ctx = ctx.unwrap_or_default();
+
+    let result = crate::APP_CTX
+        .grpc_client
+        .read(ReadLogEventRequest {
+            tenant_id: "Default".to_string(),
+            from_time: from_time.unix_microseconds,
+            to_time: 0,
+            levels,
+            context_keys: ctx
+                .into_iter()
+                .map(|itm| LogEventContext {
+                    key: itm.key,
+                    value: itm.value,
+                })
+                .collect(),
+            take: 200,
+            skip: 0,
+        })
+        .await
+        .unwrap();
+
+    let result = match result {
+        Some(result) => result
+            .into_iter()
+            .map(|itm| {
+                let level: LogApiLevel = (&itm.level()).into();
+
+                LogApiItem {
+                    timestamp: itm.timestamp,
+                    tenant_id: itm.tenant_id,
+                    process_name: itm.process_name,
+                    message: itm.message,
+                    level,
+                    ctx: itm
+                        .ctx
+                        .into_iter()
+                        .map(|itm| LogEventContextApiModel {
+                            key: itm.key,
+                            value: itm.value,
+                        })
+                        .collect(),
+                }
+            })
+            .collect(),
+        None => vec![],
+    };
+
+    Ok(result)
+}
+
+/*
 fn load<'s>(
     cx: &'s Scope<'s>,
     log_level_filter: SelectedLevel,
@@ -250,3 +384,4 @@ fn load<'s>(
         logs_state.set(Some(a));
     });
 }
+ */

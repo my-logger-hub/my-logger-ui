@@ -105,3 +105,15 @@ body {
     border-radius: 0 5px 5px 0;
     border: 1px solid lightgray;
 }
+
+#dialog-pad {
+    position: absolute;
+    left: 0;
+    top: 0;
+
+    width: var(--app-width);
+    height: var(--app-height);
+
+    background-color: #ffffffeb;
+    z-index: 1000;
+}

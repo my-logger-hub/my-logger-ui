@@ -1,64 +1,62 @@
+#![allow(non_snake_case)]
+
+#[cfg(feature = "server")]
+use crate::app_ctx::AppContext;
+use crate::{
+    dialogs::{DialogState, RenderDialog},
+    main_state::MainState,
+    views::*,
+};
+#[cfg(feature = "server")]
 use std::sync::Arc;
 
-use crate::app_ctx::AppContext;
-use crate::states::*;
-use crate::views::*;
-
 use dioxus::prelude::*;
-use dioxus_liveview::LiveViewPool;
 
-use salvo::affix;
-use salvo::prelude::*;
-use salvo::serve_static::StaticDir;
-
+#[cfg(feature = "server")]
 mod app_ctx;
+#[cfg(feature = "server")]
 mod grpc_client;
-mod http_server;
 mod log_event_context_parser;
+mod main_state;
+#[cfg(feature = "server")]
 mod settings_reader;
-mod states;
-mod static_resources;
 mod views;
 
+mod dialogs;
+
+#[cfg(feature = "server")]
 lazy_static::lazy_static! {
-    pub static ref APP_CTX: Arc<AppContext> = {
-        Arc::new(AppContext::new())
+    pub static ref APP_CTX: AppContext = {
+       AppContext::new()
     };
 }
 
-#[allow(non_snake_case)]
+#[cfg(feature = "server")]
 pub mod my_logger_grpc {
     tonic::include_proto!("my_logger");
 }
 
-#[tokio::main]
-async fn main() {
-    let settings = crate::settings_reader::SettingsReader::new(".my-logger-ui").await;
-
-    APP_CTX.apply_settings(Arc::new(settings)).await;
-
-    let acceptor = TcpListener::new("0.0.0.0:9001").bind().await;
-    let view = LiveViewPool::new();
-
-    let router = Router::new()
-        .hoop(affix::inject(Arc::new(view)))
-        .get(http_server::index)
-        .push(Router::with_path("ws").get(http_server::connect))
-        .push(Router::with_path("img/<**path>").get(StaticDir::new("./files/img")));
-
-    Server::new(acceptor).serve(router).await;
+fn main() {
+    launch(app);
 }
 
-fn app(cx: Scope) -> Element {
-    use_shared_state_provider(cx, || LeftMenuState::new());
+fn app() -> Element {
+    use_context_provider(|| Signal::new(MainState::Settings));
+    use_context_provider(|| Signal::new(DialogState::None));
 
-    let main_panel = match *use_shared_state(cx).unwrap().read() {
-        LeftMenuState::Dashboard => rsx! { render_dashboard {} },
-        LeftMenuState::Logs => rsx! { render_logs {} },
+    let main_state = consume_context::<Signal<MainState>>();
+
+    let main_state_value = main_state.read();
+
+    let right_panel = match main_state_value.clone() {
+        MainState::Dashboard => rsx! { render_dashboard {} },
+        MainState::Logs => rsx! { render_logs {} },
+        MainState::Settings => rsx! { render_settings {} },
     };
 
-    render! {
-        left_panel {}
-        div { id: "main-panel", main_panel }
+    rsx! {
+        LeftPanel {}
+        div { id: "main-panel", {right_panel} }
+        RenderDialog {}
     }
 }
