@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-22.04
     container:
       image: myjettools/dioxus-alpha:0.1.0
+      options: --privileged
+      ports:
+        - 2375:2375      
     steps:
       - uses: actions/checkout@v2
 #      - uses: actions-rs/toolchain@v1
@@ -52,8 +55,8 @@ jobs:
 #      - name: Set up QEMU
 #        uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Client
+        run: apt install -y docker
    
       - name: Docker login
         run: |          
