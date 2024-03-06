@@ -49,24 +49,14 @@ jobs:
 
       - run: dx build --platform fullstack --release
 
-      - name: Upload Target Artifacts
+      - name: Upload Build Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: target-artifacts
-          path: ./target   
-          
-
-      - name: Upload Dist Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: dist-artifacts
-          path: ./dist  
-          
-      - name: Upload Dockerfile Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: dockerfile-artifacts
-          path: ./Dockerfile           
+          name: build-artifacts
+          path: |
+            ./target   
+            ./dist 
+            ./Dockerfile
 
   publish:
     runs-on: ubuntu-22.04
@@ -74,20 +64,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2    
 
-      - name: Download Target Artifacts
+      - name: Download Build Artifacts
         uses: actions/download-artifact@v3
         with:
-          name: target-artifacts 
-
-      - name: Download Dist Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: dist-artifacts 
-
-      - name: Download Dockerfile Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: dockerfile-artifacts
+          name: build-artifacts 
 
       - name: Docker login
         run: |  
