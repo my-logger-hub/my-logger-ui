@@ -13,10 +13,6 @@ jobs:
       image: myjettools/dioxus-alpha:0.1.0
     steps:
       - uses: actions/checkout@v2
-#      - uses: actions-rs/toolchain@v1
-#        with:
-#          toolchain: stable
-
 
       - name: Update the version
         id: get_version
@@ -24,28 +20,6 @@ jobs:
           ver=${GITHUB_REF_NAME}
           echo $ver
           sed -i -e 's/^version = .*/version = "'$ver'"/' Cargo.toml
-
-#      - name: Install Protoc
-#        uses: arduino/setup-protoc@v1
-
-#      - run: openssl version
-      
-#      - run: sudo apt-get install nasm
-
-#      - run: cargo install dioxus-cli@0.5.0-alpha.0
-
-#      - run: echo $LD_LIBRARY_PATH
-
-#      - run: sudo apt install build-essential -y
-#      - run: sudo apt install libglib2.0-dev -y
-#      - run: sudo apt install pkg-config libssl-dev -y
-#      - run: sudo apt install libgtk-3-dev -y
-
-#      - run: sudo apt upgrade -y
-
-#      - run: sudo apt update -y
-
-#      - run: sudo apt-get install javascriptcoregtk-4.1 libsoup-3.0 webkit2gtk-4.1 -y
 
       - run: dx build --platform fullstack --release
 
