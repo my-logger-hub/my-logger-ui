@@ -48,7 +48,7 @@ fn main() {
 }
 
 fn app() -> Element {
-    use_context_provider(|| Signal::new(MainState::Settings(None)));
+    use_context_provider(|| Signal::new(MainState::Logs));
     use_context_provider(|| Signal::new(DialogState::None));
 
     let main_state = consume_context::<Signal<MainState>>();
