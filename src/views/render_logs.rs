@@ -136,7 +136,7 @@ pub fn render_logs() -> Element {
 
         return rsx! {
             {panel},
-            h1 { "Loading" }
+            h1 { style: "margin-top:50px;", "Loading..." }
         };
     }
 
