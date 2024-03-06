@@ -71,7 +71,8 @@ jobs:
   publish:
     runs-on: ubuntu-22.04
     needs: build
-    steps:   
+    steps:
+      - uses: actions/checkout@v2    
 
 #      - name: Download Target Artifacts
 #        uses: actions/download-artifact@v3
