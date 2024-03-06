@@ -49,18 +49,34 @@ jobs:
 
       - run: dx build --platform fullstack --release
 
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: build/      
+
   publish:
     runs-on: ubuntu-22.04
     needs: build
     steps:   
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts  
+
       - name: Get the version
         id: get_version
-        run: echo ::set-output name=VERSION::$(echo ${GITHUB_REF_NAME})
+        run: |
+          cd build
+          echo ::set-output name=VERSION::$(echo ${GITHUB_REF_NAME})
 
       - name: Docker login
-        run: |          
+        run: |  
+          cd build                
           echo "${{ secrets.PUBLISH_TOKEN }}" | docker login https://ghcr.io -u "${{ github.actor }}" --password-stdin   
       - name: Docker Build and Publish
-        run: |          
+        run: |
+          cd build                  
           docker build -t ${IMAGE_NAME}:${{ steps.get_version.outputs.VERSION }} .
           docker push ${IMAGE_NAME}:${{ steps.get_version.outputs.VERSION }}
