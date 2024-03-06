@@ -53,6 +53,10 @@ jobs:
     runs-on: ubuntu-22.04
     needs: build
     steps:   
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::$(echo ${GITHUB_REF_NAME})
+
       - name: Docker login
         run: |          
           echo "${{ secrets.PUBLISH_TOKEN }}" | docker login https://ghcr.io -u "${{ github.actor }}" --password-stdin   
