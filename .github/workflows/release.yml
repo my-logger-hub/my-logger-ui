@@ -47,23 +47,46 @@ jobs:
 
 #      - run: sudo apt-get install javascriptcoregtk-4.1 libsoup-3.0 webkit2gtk-4.1 -y
 
-      - run: dx build --platform fullstack --release
+#      - run: dx build --platform fullstack --release
 
-      - name: Upload Artifacts
+      - name: Upload Target Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: build-artifacts
-          path: build/      
+          name: target-artifacts
+          path: ./target   
+          
+
+      - name: Upload Dist Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist-artifacts
+          path: ./dist  
+          
+      - name: Upload Dockerfile Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dockerfile-artifacts
+          path: ./Dockerfile           
 
   publish:
     runs-on: ubuntu-22.04
     needs: build
     steps:   
 
-      - name: Download Artifacts
+#      - name: Download Target Artifacts
+#        uses: actions/download-artifact@v3
+#        with:
+#          name: target-artifacts 
+
+#      - name: Download Dist Artifacts
+#        uses: actions/download-artifact@v3
+#        with:
+#          name: dist-artifacts 
+
+      - name: Download Dockerfile Artifacts
         uses: actions/download-artifact@v3
         with:
-          name: build-artifacts  
+          name: dockerfile-artifacts
 
       - name: Get the version
         id: get_version
