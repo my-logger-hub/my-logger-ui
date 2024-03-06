@@ -5,6 +5,7 @@ on:
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/my-logger-ui
+  VERSION: ${GITHUB_REF_NAME}
 
 jobs:
   build:
@@ -23,7 +24,7 @@ jobs:
         run: |
           ver=${GITHUB_REF_NAME}
           echo $ver
-          sed -i -e 's/^version = .*/version = "${ver}"/' Cargo.toml
+          sed -i -e 's/^version = .*/version = "${VERSION}"/' Cargo.toml
 
 #      - name: Install Protoc
 #        uses: arduino/setup-protoc@v1
@@ -99,7 +100,5 @@ jobs:
           echo "${{ secrets.PUBLISH_TOKEN }}" | docker login https://ghcr.io -u "${{ github.actor }}" --password-stdin   
       - name: Docker Build and Publish
         run: |
-          ver=${GITHUB_REF_NAME}
-          echo $ver
-          docker build -t ${IMAGE_NAME}:$ver .
-          docker push ${IMAGE_NAME}:$ver
+          docker build -t ${IMAGE_NAME}:${VERSION} .
+          docker push ${IMAGE_NAME}:${VERSION}
