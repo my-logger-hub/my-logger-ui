@@ -37,7 +37,7 @@ pub mod my_logger_grpc {
 }
 
 fn main() {
-    launch(app);
+    LaunchBuilder::fullstack().launch(app)
 }
 
 fn app() -> Element {
