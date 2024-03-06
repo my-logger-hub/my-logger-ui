@@ -21,9 +21,7 @@ jobs:
       - name: Update the version
         id: get_version
         run: |
-          ver=${GITHUB_REF_NAME}
-          echo $ver
-          sed -i -e 's/^version = .*/version = "$ver"/' Cargo.toml
+          sed -i -e 's/^version = .*/version = "${GITHUB_REF_NAME}"/' Cargo.toml
 
 #      - name: Install Protoc
 #        uses: arduino/setup-protoc@v1
