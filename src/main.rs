@@ -36,8 +36,15 @@ pub mod my_logger_grpc {
     tonic::include_proto!("my_logger");
 }
 
+// let cfg = dioxus::fullstack::Config::new().addr(([0, 0, 0, 0], 8080));
+
 fn main() {
-    LaunchBuilder::fullstack().launch(app)
+    let cfg = dioxus::fullstack::Config::new();
+
+    #[cfg(feature = "server")]
+    let cfg = cfg.addr(([0, 0, 0, 0], 9001));
+
+    LaunchBuilder::fullstack().with_cfg(cfg).launch(app)
 }
 
 fn app() -> Element {
