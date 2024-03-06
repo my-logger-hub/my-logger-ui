@@ -22,9 +22,8 @@ jobs:
       - name: Update the version
         id: get_version
         run: |
-          ver=${GITHUB_REF_NAME}
-          echo $ver
-          sed -i -e 's/^version = .*/version = "${VERSION}"/' Cargo.toml
+          echo ${VERSION}
+          sed -i -e 's/^version = .*/version = "'${VERSION}'"/' Cargo.toml
 
 #      - name: Install Protoc
 #        uses: arduino/setup-protoc@v1
@@ -89,11 +88,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: dockerfile-artifacts
-
-      - name: Get the version
-        id: get_version
-        run: |
-   
 
       - name: Docker login
         run: |  
