@@ -9,6 +9,12 @@ env:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    services:
+      docker:
+        image: myjettools/dioxus-alpha:0.1.0
+        options: --privileged
+        ports:
+          - 2375:2375    
     steps:
       - uses: actions/checkout@v2
 #      - uses: actions-rs/toolchain@v1
@@ -45,12 +51,12 @@ jobs:
 
 #      - run: sudo apt-get install javascriptcoregtk-4.1 libsoup-3.0 webkit2gtk-4.1 -y
 
-#      - run: dx build --platform fullstack --release
+      - run: dx build --platform fullstack --release
 
-#      - name: Set up QEMU
-#        uses: docker/setup-qemu-action@v3
-
-   
+  publish:
+    runs-on: ubuntu-22.04
+    needs: build
+    steps:   
       - name: Docker login
         run: |          
           echo "${{ secrets.PUBLISH_TOKEN }}" | docker login https://ghcr.io -u "${{ github.actor }}" --password-stdin   
