@@ -9,12 +9,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    services:
-      docker:
-        image: myjettools/dioxus-alpha:0.1.0
-        options: --privileged
-        ports:
-          - 2375:2375    
+    container:
+      image: myjettools/dioxus-alpha:0.1.0
     steps:
       - uses: actions/checkout@v2
 #      - uses: actions-rs/toolchain@v1
