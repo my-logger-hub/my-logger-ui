@@ -54,7 +54,7 @@ jobs:
         with:
           name: build-artifacts
           path: |
-            ./target/my-logger-ui   
+            ./target/release/my-logger-ui   
             ./dist 
             ./Dockerfile
 
