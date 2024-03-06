@@ -6,7 +6,7 @@ pub struct SettingsReader;
 impl my_grpc_extensions::GrpcClientSettings for SettingsReader {
     async fn get_grpc_url(&self, name: &'static str) -> String {
         if name == MyLoggerGrpcClient::get_service_name() {
-            return read_env_variable("SETTINGS_SERVICE_GRPC_URL");
+            return read_env_variable("SERVICE_GRPC_URL");
         }
 
         panic!("Unknown grpc service name: {}", name)
