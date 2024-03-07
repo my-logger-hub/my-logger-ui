@@ -8,7 +8,7 @@ pub fn render_log_ball(level: LogApiLevel) -> Element {
         LogApiLevel::Warning => "orange-ball",
         LogApiLevel::Error => "red-ball",
         LogApiLevel::FatalError => "dark-red-ball",
-        LogApiLevel::Debug => "yellow-ball",
+        LogApiLevel::Debug => "gray-ball",
     };
 
     rsx! { div { class: "{style}" } }

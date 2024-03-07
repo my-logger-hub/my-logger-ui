@@ -101,6 +101,17 @@ body {
     margin-left: 5px !important;
 }
 
+.gray-ball {
+    display: block;
+    width: 10px;
+    height: 10px;
+    background-color: gray !important;
+    border-radius: 50%;
+    padding: 0 !important;
+    margin: 0;
+    margin-left: 5px !important;
+}
+
 .form-control {
     border-radius: 0 5px 5px 0;
     border: 1px solid lightgray;
