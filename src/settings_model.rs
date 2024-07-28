@@ -8,6 +8,9 @@ pub struct SettingsModel {
 }
 
 impl SettingsModel {
+    pub fn get_envs(&self) -> Vec<String> {
+        self.envs.keys().cloned().collect()
+    }
     pub fn get_env_url(&self, env: &str) -> my_ssh::OverSshConnectionSettings {
         if let Some(result) = self.envs.get(env) {
             return my_ssh::OverSshConnectionSettings::parse(result);

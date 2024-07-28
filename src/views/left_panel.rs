@@ -25,33 +25,32 @@ pub fn LeftPanel() -> Element {
     }
 
     rsx! {
-        div { id: "left-panel",
-            div {
-                h1 { style: "color:white; padding:5px; text-align:center", "Logs" }
-            }
-            br {}
-            div { style: "padding: 5px" }
-            div {
-                class: "menu-item {dashboard_active}",
-                onclick: move |_| {
-                    main_state.write().set_menu(ActiveMenu::Dashboard);
-                },
-                "Dashboard"
-            }
-            div {
-                class: "menu-item {logs_active}",
-                onclick: move |_| {
-                    main_state.write().set_menu(ActiveMenu::Logs);
-                },
-                "Logs"
-            }
-            div {
-                class: "menu-item {settings_active}",
-                onclick: move |_| {
-                    main_state.write().set_menu(ActiveMenu::Settings(None));
-                },
-                "Settings"
-            }
+
+        div {
+            h1 { style: "color:white; padding:5px; text-align:center", "Logs" }
+        }
+        br {}
+        div { style: "padding: 5px" }
+        div {
+            class: "menu-item {dashboard_active}",
+            onclick: move |_| {
+                main_state.write().set_menu(ActiveMenu::Dashboard);
+            },
+            "Dashboard"
+        }
+        div {
+            class: "menu-item {logs_active}",
+            onclick: move |_| {
+                main_state.write().set_menu(ActiveMenu::Logs);
+            },
+            "Logs"
+        }
+        div {
+            class: "menu-item {settings_active}",
+            onclick: move |_| {
+                main_state.write().set_menu(ActiveMenu::Settings(None));
+            },
+            "Settings"
         }
     }
 }

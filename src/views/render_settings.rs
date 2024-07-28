@@ -16,7 +16,7 @@ pub fn RenderSettings() -> Element {
 
         (
             main_state_read_access.menu.unwrap_ignore_events(),
-            main_state_read_access.active_env.clone(),
+            main_state_read_access.selected_env.clone(),
         )
     };
 

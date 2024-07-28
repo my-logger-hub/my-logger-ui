@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::format, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use crate::{grpc_client::MyLoggerGrpcClient, settings_model::SettingsModel};
 use my_settings_reader::SettingsReader;
@@ -37,10 +37,9 @@ impl AppContext {
 
         let (host, port) = get_host_port(&connection_settings.remote_resource_string);
 
-        let grpc_client = MyLoggerGrpcClient::new(Arc::new(GrpcLogSettings::new(format!(
-            "http://{}",
-            port_forward_listen_host
-        ))));
+        let grpc_client = MyLoggerGrpcClient::new(Arc::new(GrpcLogSettings::new(
+            port_forward_listen_host.clone(),
+        )));
 
         let mut client = GrpcClient {
             grpc_client,
@@ -68,14 +67,13 @@ impl AppContext {
 }
 
 pub async fn build_port_forward_listen_port(env: &str) -> String {
-    return "127.0.0.1:65000".to_string();
-    /*
+    // return "127.0.0.1:65000".to_string();
+
     let unix_host = rust_extensions::file_utils::format_path(format!("~/{}.sock", env));
 
     let _ = tokio::fs::remove_file(unix_host.as_str()).await;
 
     unix_host.to_string()
-     */
 }
 
 pub fn get_host_port(src: &str) -> (String, u16) {

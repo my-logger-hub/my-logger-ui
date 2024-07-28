@@ -7,13 +7,13 @@ use crate::main_state::MainState;
 
 #[component]
 pub fn RenderDashboard() -> Element {
-    let mut data: Signal<Option<DashboardItem>, _> = use_signal(|| None);
-
     let mut selected_state = use_signal(|| 60i64);
 
     let main_state = consume_context::<Signal<MainState>>();
 
-    let env = main_state.read().active_env.clone();
+    let dashboard_data = main_state.read().dashboard_data.clone();
+
+    let env = main_state.read().selected_env.clone();
     let env_on_click = env.clone();
 
     let select = rsx! {
@@ -21,10 +21,11 @@ pub fn RenderDashboard() -> Element {
             class: "form-control",
             value: selected_state.read().to_string(),
             onchange: move |e| {
+                let mut main_state = consume_context::<Signal<MainState>>();
                 let value = e.value().parse::<i64>().unwrap();
                 selected_state.set(value);
-                data.set(None);
-                request_data(env_on_click.clone(), &mut data, &selected_state);
+                main_state.write().set_dashboard_data(None);
+                request_data(env_on_click.clone(), main_state, &selected_state);
             },
             option { value: "60", "1 Hour" }
             option { value: "120", "2 Hours" }
@@ -35,8 +36,8 @@ pub fn RenderDashboard() -> Element {
     };
 
     //let data_access = data.get();
-    if data.read().is_none() {
-        request_data(env.clone(), &mut data, &selected_state);
+    if dashboard_data.is_none() {
+        request_data(env.clone(), main_state, &selected_state);
 
         return rsx! {
             {select},
@@ -44,16 +45,15 @@ pub fn RenderDashboard() -> Element {
         };
     }
 
-    let data_access = data.read();
-    let data_access = data_access.as_ref().unwrap();
+    let dashboard_data = dashboard_data.unwrap();
 
     let mut javascript = format!(
         "var yValues = [{}, {}, {}, {}, {}];",
-        data_access.info_count,
-        data_access.warning_count,
-        data_access.error_count,
-        data_access.fatal_count,
-        data_access.debug_count,
+        dashboard_data.info_count,
+        dashboard_data.warning_count,
+        dashboard_data.error_count,
+        dashboard_data.fatal_count,
+        dashboard_data.debug_count,
     );
 
     javascript.push_str(
@@ -115,18 +115,17 @@ fn request_data<'s>(cx: &'s Scope<'s>, data: &UseState<Option<StatisticData>>, h
 
 fn request_data(
     env: Rc<String>,
-    data: &mut Signal<Option<DashboardItem>, UnsyncStorage>,
+    mut main_state: Signal<MainState>,
     selected_state: &Signal<i64, UnsyncStorage>,
 ) {
-    let mut data = data.to_owned();
-
     let minutes_before = *selected_state.read();
 
     spawn(async move {
         let result = get_dashboard(env.to_string(), minutes_before)
             .await
             .unwrap();
-        data.set(Some(result));
+
+        main_state.write().set_dashboard_data(Some(result));
     });
 }
 

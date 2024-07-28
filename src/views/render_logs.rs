@@ -28,13 +28,13 @@ impl HoursAgo {
 
 #[component]
 pub fn RenderLogs() -> Element {
-    let mut logs_state: Signal<Option<Vec<Rc<LogApiItem>>>, _> = use_signal(|| None);
+    let main_state = consume_context::<Signal<MainState>>();
     let mut log_level_filter: Signal<SelectedLevel, _> = use_signal(|| SelectedLevel::All);
     let mut hours_ago_filter: Signal<HoursAgo, _> = use_signal(|| HoursAgo(2));
 
     let mut ctx_filter: Signal<String, _> = use_signal(|| "".to_string());
 
-    let log_state_value = logs_state.read().clone();
+    let logs_data = main_state.read().logs_data.clone();
 
     let log_level_value_as_str = format!("{:?}", log_level_filter.clone());
 
@@ -46,7 +46,7 @@ pub fn RenderLogs() -> Element {
 
     let main_state = consume_context::<Signal<MainState>>();
 
-    let env = main_state.read().active_env.clone();
+    let env = main_state.read().selected_env.clone();
     let env_on_click = env.clone();
 
     let panel = rsx! {
@@ -115,12 +115,13 @@ pub fn RenderLogs() -> Element {
                         class: "btn btn-primary btn-sm",
 
                         onclick: move |_| {
-                            logs_state.set(None);
+                            let mut main_state = consume_context::<Signal<MainState>>();
+                            main_state.write().set_logs_data(None);
                             load(
                                 env_on_click.clone(),
                                 log_level_filter.read().clone(),
                                 hours_ago_filter.read().get_value(),
-                                &logs_state,
+                                main_state,
                                 crate::log_event_context_parser::parse_key_value_from_string(
                                     ctx_filter_panel_value.as_str(),
                                 ),
@@ -133,12 +134,12 @@ pub fn RenderLogs() -> Element {
         }
     };
 
-    if log_state_value.is_none() {
+    if logs_data.is_none() {
         load(
             env.clone(),
             log_level_filter.read().clone(),
             hours_ago_filter.read().get_value(),
-            &logs_state,
+            main_state,
             crate::log_event_context_parser::parse_key_value_from_string(ctx_filter_value.as_str()),
         );
 
@@ -148,7 +149,7 @@ pub fn RenderLogs() -> Element {
         };
     }
 
-    let log_state_value = log_state_value.unwrap();
+    let log_state_value = logs_data.unwrap();
 
     //let ctx_filter_value = ctx_filter_value.clone();
 
@@ -239,11 +240,9 @@ fn load<'s>(
     env: Rc<String>,
     log_level_filter: SelectedLevel,
     hours_before: i64,
-    logs_state: &Signal<Option<Vec<Rc<LogApiItem>>>, UnsyncStorage>,
+    mut main_state: Signal<MainState>,
     context_keys: Vec<LogEventContextApiModel>,
 ) {
-    let mut logs_state = logs_state.to_owned();
-
     let level = match log_level_filter {
         SelectedLevel::All => None,
         SelectedLevel::Info => Some(LogApiLevel::Info),
@@ -264,9 +263,7 @@ fn load<'s>(
             .await
             .unwrap();
 
-        let result = result.into_iter().map(|itm| Rc::new(itm)).collect();
-
-        logs_state.set(Some(result));
+        main_state.write().set_logs_data(Some(result));
     });
 }
 
