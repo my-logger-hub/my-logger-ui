@@ -7,10 +7,9 @@ use crate::{
     main_state::MainState,
     views::*,
 };
-#[cfg(feature = "server")]
-use std::sync::Arc;
 
 use dioxus::prelude::*;
+use main_state::ActiveMenu;
 
 #[cfg(feature = "server")]
 mod app_ctx;
@@ -19,7 +18,7 @@ mod grpc_client;
 mod log_event_context_parser;
 mod main_state;
 #[cfg(feature = "server")]
-mod settings_reader;
+mod settings_model;
 mod views;
 
 mod dialogs;
@@ -48,17 +47,23 @@ fn main() {
 }
 
 fn app() -> Element {
-    use_context_provider(|| Signal::new(MainState::Logs));
+    use_context_provider(|| Signal::new(MainState::new()));
     use_context_provider(|| Signal::new(DialogState::None));
 
     let main_state = consume_context::<Signal<MainState>>();
 
     let main_state_value = main_state.read();
 
-    let right_panel = match main_state_value.clone() {
-        MainState::Dashboard => rsx! { render_dashboard {} },
-        MainState::Logs => rsx! { render_logs {} },
-        MainState::Settings(_) => rsx! { render_settings {} },
+    let right_panel = match main_state_value.menu.clone() {
+        ActiveMenu::Dashboard => rsx! {
+            RenderDashboard {}
+        },
+        ActiveMenu::Logs => rsx! {
+            RenderLogs {}
+        },
+        ActiveMenu::Settings(_) => rsx! {
+            RenderSettings {}
+        },
     };
 
     rsx! {

@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 use serde::{Deserialize, Serialize};
 
-use crate::views::render_log_ball;
+use crate::{main_state::MainState, views::render_log_ball};
 
 #[derive(Debug, Clone, Copy)]
 pub enum SelectedLevel {
@@ -26,7 +26,8 @@ impl HoursAgo {
     }
 }
 
-pub fn render_logs() -> Element {
+#[component]
+pub fn RenderLogs() -> Element {
     let mut logs_state: Signal<Option<Vec<Rc<LogApiItem>>>, _> = use_signal(|| None);
     let mut log_level_filter: Signal<SelectedLevel, _> = use_signal(|| SelectedLevel::All);
     let mut hours_ago_filter: Signal<HoursAgo, _> = use_signal(|| HoursAgo(2));
@@ -42,6 +43,11 @@ pub fn render_logs() -> Element {
     let ctx_filter_value = Rc::new(ctx_filter.read().clone());
 
     let ctx_filter_panel_value = ctx_filter_value.clone();
+
+    let main_state = consume_context::<Signal<MainState>>();
+
+    let env = main_state.read().active_env.clone();
+    let env_on_click = env.clone();
 
     let panel = rsx! {
 
@@ -111,6 +117,7 @@ pub fn render_logs() -> Element {
                         onclick: move |_| {
                             logs_state.set(None);
                             load(
+                                env_on_click.clone(),
                                 log_level_filter.read().clone(),
                                 hours_ago_filter.read().get_value(),
                                 &logs_state,
@@ -128,6 +135,7 @@ pub fn render_logs() -> Element {
 
     if log_state_value.is_none() {
         load(
+            env.clone(),
             log_level_filter.read().clone(),
             hours_ago_filter.read().get_value(),
             &logs_state,
@@ -228,6 +236,7 @@ pub struct LogEventContextApiModel {
 }
 
 fn load<'s>(
+    env: Rc<String>,
     log_level_filter: SelectedLevel,
     hours_before: i64,
     logs_state: &Signal<Option<Vec<Rc<LogApiItem>>>, UnsyncStorage>,
@@ -251,7 +260,9 @@ fn load<'s>(
     };
 
     spawn(async move {
-        let result = load_logs(level, hours_before, context_keys).await.unwrap();
+        let result = load_logs(env.to_string(), level, hours_before, context_keys)
+            .await
+            .unwrap();
 
         let result = result.into_iter().map(|itm| Rc::new(itm)).collect();
 
@@ -261,6 +272,7 @@ fn load<'s>(
 
 #[server]
 pub async fn load_logs(
+    env: String,
     level: Option<LogApiLevel>,
     hours_before: i64,
     ctx: Option<Vec<LogEventContextApiModel>>,
@@ -286,6 +298,8 @@ pub async fn load_logs(
     let ctx = ctx.unwrap_or_default();
 
     let result = crate::APP_CTX
+        .get_client(env.as_str())
+        .await
         .grpc_client
         .read(ReadLogEventRequest {
             tenant_id: "Default".to_string(),

@@ -1,10 +1,20 @@
+use std::rc::Rc;
+
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 
-pub fn render_dashboard() -> Element {
+use crate::main_state::MainState;
+
+#[component]
+pub fn RenderDashboard() -> Element {
     let mut data: Signal<Option<DashboardItem>, _> = use_signal(|| None);
 
     let mut selected_state = use_signal(|| 60i64);
+
+    let main_state = consume_context::<Signal<MainState>>();
+
+    let env = main_state.read().active_env.clone();
+    let env_on_click = env.clone();
 
     let select = rsx! {
         select {
@@ -14,7 +24,7 @@ pub fn render_dashboard() -> Element {
                 let value = e.value().parse::<i64>().unwrap();
                 selected_state.set(value);
                 data.set(None);
-                request_data(&mut data, &selected_state);
+                request_data(env_on_click.clone(), &mut data, &selected_state);
             },
             option { value: "60", "1 Hour" }
             option { value: "120", "2 Hours" }
@@ -26,7 +36,7 @@ pub fn render_dashboard() -> Element {
 
     //let data_access = data.get();
     if data.read().is_none() {
-        request_data(&mut data, &selected_state);
+        request_data(env.clone(), &mut data, &selected_state);
 
         return rsx! {
             {select},
@@ -104,6 +114,7 @@ fn request_data<'s>(cx: &'s Scope<'s>, data: &UseState<Option<StatisticData>>, h
  */
 
 fn request_data(
+    env: Rc<String>,
     data: &mut Signal<Option<DashboardItem>, UnsyncStorage>,
     selected_state: &Signal<i64, UnsyncStorage>,
 ) {
@@ -112,7 +123,9 @@ fn request_data(
     let minutes_before = *selected_state.read();
 
     spawn(async move {
-        let result = get_dashboard(minutes_before).await.unwrap();
+        let result = get_dashboard(env.to_string(), minutes_before)
+            .await
+            .unwrap();
         data.set(Some(result));
     });
 }
@@ -127,7 +140,10 @@ pub struct DashboardItem {
 }
 
 #[server]
-pub async fn get_dashboard(minutes_before: i64) -> Result<DashboardItem, ServerFnError> {
+pub async fn get_dashboard(
+    env: String,
+    minutes_before: i64,
+) -> Result<DashboardItem, ServerFnError> {
     use crate::my_logger_grpc::*;
     use rust_extensions::date_time::DateTimeAsMicroseconds;
 
@@ -136,6 +152,8 @@ pub async fn get_dashboard(minutes_before: i64) -> Result<DashboardItem, ServerF
     from_time.add_minutes(-minutes_before);
 
     let result = crate::APP_CTX
+        .get_client(env.as_str())
+        .await
         .grpc_client
         .get_statistic(GetStatisticsRequest {
             tenant_id: "Default".to_string(),

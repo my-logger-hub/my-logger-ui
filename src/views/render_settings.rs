@@ -3,14 +3,22 @@ use std::rc::Rc;
 use dioxus::prelude::*;
 use serde::*;
 
-use crate::{dialogs::DialogState, main_state::MainState, render_log_ball, LogApiLevel};
+use crate::{dialogs::DialogState, main_state::*, render_log_ball, LogApiLevel};
 
-pub fn render_settings() -> Element {
+#[component]
+pub fn RenderSettings() -> Element {
     let mut dialog_state = consume_context::<Signal<DialogState>>();
 
     let main_state = consume_context::<Signal<MainState>>();
 
-    let ignore_events = main_state.read().unwrap_ignore_events();
+    let (ignore_events, env) = {
+        let main_state_read_access = main_state.read();
+
+        (
+            main_state_read_access.menu.unwrap_ignore_events(),
+            main_state_read_access.active_env.clone(),
+        )
+    };
 
     let content = match ignore_events {
         Some(value) => {
@@ -19,6 +27,8 @@ pub fn render_settings() -> Element {
                 .map(|itm| {
                     let level = format!("{:?}", itm.level);
                     let log_ball = render_log_ball(itm.level.clone());
+
+                    let env = env.clone();
 
                     rsx! {
                         tr {
@@ -32,7 +42,11 @@ pub fn render_settings() -> Element {
                                     style: "padding:2px 6px",
 
                                     onclick: move |_| {
-                                        dialog_state.set(DialogState::DeleteConfirmation(itm.clone()));
+                                        dialog_state
+                                            .set(DialogState::DeleteConfirmation {
+                                                env: env.clone(),
+                                                itm: itm.clone(),
+                                            });
                                     },
                                     "Delete"
                                 }
@@ -54,7 +68,7 @@ pub fn render_settings() -> Element {
                                 class: "btn btn-sm btn-primary",
                                 style: "padding:2px 6px",
                                 onclick: move |_| {
-                                    dialog_state.set(DialogState::AddIgnoreEvent);
+                                    dialog_state.set(DialogState::AddIgnoreEvent(env.clone()));
                                 },
                                 "Add"
                             }
@@ -66,8 +80,10 @@ pub fn render_settings() -> Element {
             }
         }
         None => {
-            load_ignore_events(&main_state);
-            return rsx! { h1 { "Loading" } };
+            load_ignore_events(env.clone(), &main_state);
+            return rsx! {
+                h1 { "Loading" }
+            };
         }
     };
 
@@ -91,23 +107,27 @@ pub struct IgnoreEventApiModel {
     pub marker: String,
 }
 
-fn load_ignore_events(main_state: &Signal<MainState>) {
+fn load_ignore_events(env: Rc<String>, main_state: &Signal<MainState>) {
     let mut main_state = main_state.to_owned();
 
     spawn(async move {
-        let result = get_ignore_events().await.unwrap();
+        let result = get_ignore_events(env.to_string()).await.unwrap();
 
         let result = result.into_iter().map(|itm| Rc::new(itm)).collect();
 
-        main_state.set(MainState::Settings(Some(result)));
+        main_state
+            .write()
+            .set_menu(ActiveMenu::Settings(Some(result)));
     });
 }
 
 #[server]
-pub async fn get_ignore_events() -> Result<Vec<IgnoreEventApiModel>, ServerFnError> {
+pub async fn get_ignore_events(env: String) -> Result<Vec<IgnoreEventApiModel>, ServerFnError> {
     use crate::my_logger_grpc::*;
 
     let response: Option<Vec<IgnoreEventGrpcModel>> = crate::APP_CTX
+        .get_client(env.as_str())
+        .await
         .grpc_client
         .get_ignore_events(())
         .await

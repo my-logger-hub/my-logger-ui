@@ -10,15 +10,19 @@ pub fn RenderDialog() -> Element {
     let mut dialog_state = consume_context::<Signal<DialogState>>();
 
     let dialog_content = match dialog_state.read().clone() {
-        DialogState::None => return rsx! { div {} },
+        DialogState::None => {
+            return rsx! {
+                div {}
+            }
+        }
 
-        DialogState::AddIgnoreEvent => {
-            render_add_ignore_event_confirmation(&main_state, &dialog_state)
+        DialogState::AddIgnoreEvent(env) => {
+            render_add_ignore_event_confirmation(env, &main_state, &dialog_state)
             //return rsx! { div {} };
         }
 
-        DialogState::DeleteConfirmation(itm) => {
-            render_delete_ignore_event_confirmation(itm, &main_state, &dialog_state)
+        DialogState::DeleteConfirmation { env, itm } => {
+            render_delete_ignore_event_confirmation(env, itm, &main_state, &dialog_state)
         }
     };
 

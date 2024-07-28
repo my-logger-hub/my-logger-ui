@@ -1,4 +1,9 @@
-use crate::{main_state::MainState, IgnoreEventApiModel, LogApiLevel};
+use std::rc::Rc;
+
+use crate::{
+    main_state::{ActiveMenu, MainState},
+    IgnoreEventApiModel, LogApiLevel,
+};
 use dioxus::prelude::*;
 
 use super::DialogState;
@@ -32,6 +37,7 @@ impl Marker {
 }
 
 pub fn render_add_ignore_event_confirmation(
+    env: Rc<String>,
     main_state: &Signal<MainState>,
     dialog_state: &Signal<DialogState>,
 ) -> Element {
@@ -84,15 +90,19 @@ pub fn render_add_ignore_event_confirmation(
                         let level = log_level.read().to_api_model();
                         let application = application.read().to_string();
                         let marker = marker.read().to_string();
+                        let env = env.clone();
                         spawn(async move {
-                            add_ignore_event(IgnoreEventApiModel {
-                                    level,
-                                    application,
-                                    marker,
-                                })
+                            add_ignore_event(
+                                    env.to_string(),
+                                    IgnoreEventApiModel {
+                                        level,
+                                        application,
+                                        marker,
+                                    },
+                                )
                                 .await
                                 .unwrap();
-                            main_state.set(MainState::Settings(None));
+                            main_state.write().set_menu(ActiveMenu::Settings(None));
                             dialog_state.set(DialogState::None);
                         });
                     },
@@ -109,12 +119,17 @@ pub fn render_add_ignore_event_confirmation(
 }
 
 #[server]
-pub async fn add_ignore_event(event: IgnoreEventApiModel) -> Result<(), ServerFnError> {
+pub async fn add_ignore_event(
+    env: String,
+    event: IgnoreEventApiModel,
+) -> Result<(), ServerFnError> {
     use crate::my_logger_grpc::*;
 
     let level: LogLevelGrpcModel = (&event.level).into();
 
     crate::APP_CTX
+        .get_client(env.as_str())
+        .await
         .grpc_client
         .set_ignore_event(IgnoreEventGrpcModel {
             level: level as i32,

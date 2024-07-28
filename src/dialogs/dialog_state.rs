@@ -5,6 +5,9 @@ use crate::IgnoreEventApiModel;
 #[derive(Clone)]
 pub enum DialogState {
     None,
-    AddIgnoreEvent,
-    DeleteConfirmation(Rc<IgnoreEventApiModel>),
+    AddIgnoreEvent(Rc<String>),
+    DeleteConfirmation {
+        env: Rc<String>,
+        itm: Rc<IgnoreEventApiModel>,
+    },
 }

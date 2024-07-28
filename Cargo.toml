@@ -21,6 +21,8 @@ server = [
     "lazy_static",
     "serde_yaml",
     "flurl",
+    "my-settings-reader",
+    "my-ssh",
 ]
 web = ["dioxus/web"]
 
@@ -28,8 +30,9 @@ web = ["dioxus/web"]
 rust-extensions = { tag = "0.1.4", git = "https://github.com/MyJetTools/rust-extensions.git" }
 my-logger = { tag = "1.0.2", git = "https://github.com/MyJetTools/my-logger.git", optional = true }
 
-my-grpc-extensions = { tag = "0.5.0", git = "https://github.com/MyJetTools/my-grpc-extensions.git", features = [
+my-grpc-extensions = { tag = "0.6.2", git = "https://github.com/MyJetTools/my-grpc-extensions.git", features = [
     "grpc-client",
+    "with-unix-socket",
 ], optional = true }
 
 
@@ -52,8 +55,13 @@ prost = { version = "*", optional = true }
 prost-types = { version = "*", optional = true }
 async-trait = { version = "*", optional = true }
 lazy_static = { version = "*", optional = true }
-flurl = { tag = "0.5.0", git = "https://github.com/MyJetTools/fl-url.git", optional = true }
+flurl = { tag = "0.5.3", git = "https://github.com/MyJetTools/fl-url.git", optional = true }
 base64 = { version = "*" }
+
+my-ssh = { tag = "0.1.1", git = "https://github.com/MyJetTools/my-ssh.git", optional = true }
+
+
+my-settings-reader = { tag = "0.3.2", git = "https://github.com/MyJetTools/my-settings-reader.git", optional = true }
 
 [build-dependencies]
 ci-utils = { git = "https://github.com/MyJetTools/ci-utils.git", tag = "0.1.0" }
