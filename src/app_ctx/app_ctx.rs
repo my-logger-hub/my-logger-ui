@@ -3,14 +3,13 @@ use std::{collections::HashMap, sync::Arc};
 use crate::{grpc_client::MyLoggerGrpcClient, settings_model::SettingsModel};
 use my_settings_reader::SettingsReader;
 use my_ssh::SshSessionsPool;
-use rust_extensions::str_utils::StrUtils;
 use tokio::sync::Mutex;
 
-use super::{grpc_log_client_settings::GrpcLogSettings, GrpcClient};
+use super::grpc_log_client_settings::GrpcLogSettings;
 
 pub struct AppContext {
     pub settings_reader: SettingsReader<SettingsModel>,
-    pub clients_cache: Mutex<HashMap<String, Arc<GrpcClient>>>,
+    pub clients_cache: Mutex<HashMap<String, Arc<MyLoggerGrpcClient>>>,
     pub ssh_sessions_pool: Arc<SshSessionsPool>,
 }
 
@@ -23,7 +22,7 @@ impl AppContext {
         }
     }
 
-    pub async fn get_client(&self, env: &str) -> Arc<GrpcClient> {
+    pub async fn get_client(&self, env: &str) -> Arc<MyLoggerGrpcClient> {
         let mut clients_cache = self.clients_cache.lock().await;
 
         if let Some(result) = clients_cache.get(env).cloned() {
@@ -31,69 +30,23 @@ impl AppContext {
         }
 
         let settings = self.settings_reader.get_settings().await;
-        let connection_settings = settings.get_env_url(env);
-
-        let port_forward_listen_host = build_port_forward_listen_port(env).await;
-
-        let (host, port) = get_host_port(&connection_settings.remote_resource_string);
+        let over_ssh_connection = settings.get_env_url(env).await;
 
         let grpc_client = MyLoggerGrpcClient::new(Arc::new(GrpcLogSettings::new(
-            port_forward_listen_host.clone(),
+            over_ssh_connection.remote_resource_string,
         )));
 
-        let mut client = GrpcClient {
-            grpc_client,
-            ssh_credentials: connection_settings.ssh_credentials.map(Arc::new),
-            ssh_port_forward_tunnel: None,
+        if let Some(value) = over_ssh_connection.ssh_credentials {
+            grpc_client.set_ssh_credentials(Arc::new(value)).await;
+            grpc_client
+                .set_ssh_sessions_pool(self.ssh_sessions_pool.clone())
+                .await;
         };
 
-        if let Some(ssh_credentials) = &client.ssh_credentials {
-            let ssh_session = self.ssh_sessions_pool.get_or_create(ssh_credentials).await;
+        let grpc_client = Arc::new(grpc_client);
 
-            let ssh_session = ssh_session
-                .start_port_forward(port_forward_listen_host, host, port)
-                .await
-                .unwrap();
+        clients_cache.insert(env.to_string(), grpc_client.clone());
 
-            client.ssh_port_forward_tunnel = Some(ssh_session);
-        }
-
-        let client = Arc::new(client);
-
-        clients_cache.insert(env.to_string(), client.clone());
-
-        client
+        grpc_client
     }
-}
-
-pub async fn build_port_forward_listen_port(env: &str) -> String {
-    // return "127.0.0.1:65000".to_string();
-
-    let unix_host = rust_extensions::file_utils::format_path(format!("~/{}.sock", env));
-
-    let _ = tokio::fs::remove_file(unix_host.as_str()).await;
-
-    unix_host.to_string()
-}
-
-pub fn get_host_port(src: &str) -> (String, u16) {
-    let parts = src.split_2_or_3_lines(":");
-
-    if parts.is_none() {
-        panic!("Invalid scheme://host:port format: {}", src);
-    }
-
-    let (left, middle, right) = parts.unwrap();
-
-    let (host, port) = if let Some(right) = right {
-        (middle, right)
-    } else {
-        (left, middle)
-    };
-
-    let port = port.parse().unwrap();
-    if host.starts_with("//") {
-        return (host[2..].to_string(), port);
-    }
-    (host.to_string(), port)
 }

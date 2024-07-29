@@ -62,7 +62,6 @@ pub async fn delete_ignore_event(
     crate::APP_CTX
         .get_client(env.as_str())
         .await
-        .grpc_client
         .delete_ignore_event(DeleteIgnoreEventGrpcRequest {
             level: level as i32,
             application: event.application,

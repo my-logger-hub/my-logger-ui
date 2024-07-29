@@ -128,7 +128,6 @@ pub async fn get_ignore_events(env: String) -> Result<Vec<IgnoreEventApiModel>, 
     let response: Option<Vec<IgnoreEventGrpcModel>> = crate::APP_CTX
         .get_client(env.as_str())
         .await
-        .grpc_client
         .get_ignore_events(())
         .await
         .unwrap();

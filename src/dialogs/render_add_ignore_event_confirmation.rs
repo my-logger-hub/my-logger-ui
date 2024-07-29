@@ -130,7 +130,6 @@ pub async fn add_ignore_event(
     crate::APP_CTX
         .get_client(env.as_str())
         .await
-        .grpc_client
         .set_ignore_event(IgnoreEventGrpcModel {
             level: level as i32,
             application: event.application,

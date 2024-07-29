@@ -153,7 +153,6 @@ pub async fn get_dashboard(
     let result = crate::APP_CTX
         .get_client(env.as_str())
         .await
-        .grpc_client
         .get_statistic(GetStatisticsRequest {
             tenant_id: "Default".to_string(),
             from_time: from_time.unix_microseconds,

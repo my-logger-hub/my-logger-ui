@@ -297,7 +297,6 @@ pub async fn load_logs(
     let result = crate::APP_CTX
         .get_client(env.as_str())
         .await
-        .grpc_client
         .read(ReadLogEventRequest {
             tenant_id: "Default".to_string(),
             from_time: from_time.unix_microseconds,
