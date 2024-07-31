@@ -28,7 +28,7 @@ web = ["dioxus/web"]
 
 [dependencies]
 rust-extensions = { tag = "0.1.4", git = "https://github.com/MyJetTools/rust-extensions.git" }
-my-logger = { tag = "1.0.2", git = "https://github.com/MyJetTools/my-logger.git", optional = true }
+my-logger = { tag = "1.1.0", git = "https://github.com/MyJetTools/my-logger.git", optional = true }
 
 my-grpc-extensions = { tag = "0.6.2", git = "https://github.com/MyJetTools/my-grpc-extensions.git", features = [
     "grpc-client",
@@ -38,7 +38,7 @@ my-grpc-extensions = { tag = "0.6.2", git = "https://github.com/MyJetTools/my-gr
 
 
 settings-utils = { tag = "0.1.1", git = "https://github.com/MyJetTools/settings-utils.git" }
-dioxus = { version = "0.5.0-alpha.0", features = ["fullstack", "router"] }
+dioxus = { version = "0.5", features = ["fullstack", "router"] }
 serde = "*"
 
 
@@ -65,4 +65,4 @@ my-ssh = { tag = "0.1.1", git = "https://github.com/MyJetTools/my-ssh.git", opti
 my-settings-reader = { tag = "0.3.2", git = "https://github.com/MyJetTools/my-settings-reader.git", optional = true }
 
 [build-dependencies]
-ci-utils = { git = "https://github.com/MyJetTools/ci-utils.git", tag = "0.1.0" }
+ci-utils = { git = "https://github.com/MyJetTools/ci-utils.git", tag = "0.1.1" }
