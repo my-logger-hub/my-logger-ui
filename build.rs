@@ -1,4 +1,9 @@
 fn main() {
-    let url = "https://raw.githubusercontent.com/my-logger-hub/proto-files/main/";
-    ci_utils::sync_and_build_proto_file(url, "MyLogger.proto");
+    ci_utils::sync_and_build_proto_file_from_private_github_repo(
+        "my-logger-hub",
+        "my-logger-server",
+        "proto/MyLogger.proto",
+    );
+
+    ci_utils::tonic_build::compile_protos("proto/MyLogger.proto").unwrap();
 }

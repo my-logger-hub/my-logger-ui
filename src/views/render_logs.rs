@@ -16,6 +16,11 @@ pub enum SelectedLevel {
     FatalError,
     Debug,
 }
+#[derive(Debug, Clone, Copy)]
+pub enum SearchType {
+    Ctx,
+    Text,
+}
 
 #[derive(Clone, Copy)]
 pub struct HoursAgo(i64);
@@ -29,6 +34,7 @@ impl HoursAgo {
 #[component]
 pub fn RenderLogs() -> Element {
     let main_state = consume_context::<Signal<MainState>>();
+    let mut search_type = use_signal(|| SearchType::Ctx);
     let mut log_level_filter: Signal<SelectedLevel, _> = use_signal(|| SelectedLevel::All);
     let mut hours_ago_filter: Signal<HoursAgo, _> = use_signal(|| HoursAgo(2));
 
@@ -48,6 +54,11 @@ pub fn RenderLogs() -> Element {
 
     let env = main_state.read().selected_env.clone();
     let env_on_click = env.clone();
+
+    let search_placeholder = match &*search_type.read() {
+        SearchType::Ctx => "Example: Application='MyApp' ; Version='Version'",
+        SearchType::Text => "Just a text",
+    };
 
     let panel = rsx! {
 
@@ -97,16 +108,29 @@ pub fn RenderLogs() -> Element {
                         }
                     }
                 }
-                td { style: "width:70%",
-                    div { class: "input-group input-group-sm",
-                        span { class: "input-group-text", "Key Value Filter:" }
-                        input {
-                            class: "form-control",
-                            placeholder: "Example: Application='MyApp' ; Version='Version'",
-                            value: "{ctx_filter_value}",
-                            oninput: move |e| {
-                                ctx_filter.set(e.value());
+                td { style: "padding-right: 0px; padding-left: 10px;",
+
+                    select {
+                        style: "width: 100%;border: 1px solid lightgray;border-radius: 5px 0 0 5px;border-right: none;background-color: var(--vz-tertiary-bg);",
+                        class: "form-select form-select-sm",
+                        oninput: move |e| {
+                            match e.value().as_str() {
+                                "ctx" => search_type.set(SearchType::Ctx),
+                                "text" => search_type.set(SearchType::Text),
+                                _ => {}
                             }
+                        },
+                        option { value: "ctx", "Ctx Search" }
+                        option { value: "text", "Text Search" }
+                    }
+                }
+                td { style: "width:60%;padding-left: 0px;",
+                    input {
+                        class: "form-control form-control-sm",
+                        placeholder: search_placeholder,
+                        value: "{ctx_filter_value}",
+                        oninput: move |e| {
+                            ctx_filter.set(e.value());
                         }
                     }
                 }
@@ -117,15 +141,27 @@ pub fn RenderLogs() -> Element {
                         onclick: move |_| {
                             let mut main_state = consume_context::<Signal<MainState>>();
                             main_state.write().set_logs_data(None);
-                            load(
-                                env_on_click.clone(),
-                                log_level_filter.read().clone(),
-                                hours_ago_filter.read().get_value(),
-                                main_state,
-                                crate::log_event_context_parser::parse_key_value_from_string(
-                                    ctx_filter_panel_value.as_str(),
-                                ),
-                            );
+                            match search_type.read().clone() {
+                                SearchType::Ctx => {
+                                    load(
+                                        env_on_click.clone(),
+                                        log_level_filter.read().clone(),
+                                        hours_ago_filter.read().get_value(),
+                                        main_state,
+                                        crate::log_event_context_parser::parse_key_value_from_string(
+                                            ctx_filter_panel_value.as_str(),
+                                        ),
+                                    );
+                                }
+                                SearchType::Text => {
+                                    search_as_text(
+                                        main_state,
+                                        env_on_click.clone(),
+                                        hours_ago_filter.read().get_value(),
+                                        ctx_filter_panel_value.to_string(),
+                                    );
+                                }
+                            }
                         },
                         "Get data"
                     }
@@ -135,13 +171,28 @@ pub fn RenderLogs() -> Element {
     };
 
     if logs_data.is_none() {
-        load(
-            env.clone(),
-            log_level_filter.read().clone(),
-            hours_ago_filter.read().get_value(),
-            main_state,
-            crate::log_event_context_parser::parse_key_value_from_string(ctx_filter_value.as_str()),
-        );
+        match search_type.read().clone() {
+            SearchType::Ctx => {
+                load(
+                    env.clone(),
+                    log_level_filter.read().clone(),
+                    hours_ago_filter.read().get_value(),
+                    main_state,
+                    crate::log_event_context_parser::parse_key_value_from_string(
+                        ctx_filter_value.as_str(),
+                    ),
+                );
+            }
+
+            SearchType::Text => {
+                search_as_text(
+                    main_state,
+                    env.clone(),
+                    hours_ago_filter.read().get_value(),
+                    ctx_filter_value.to_string(),
+                );
+            }
+        }
 
         return rsx! {
             {panel},
@@ -151,13 +202,11 @@ pub fn RenderLogs() -> Element {
 
     let log_state_value = logs_data.unwrap();
 
-    //let ctx_filter_value = ctx_filter_value.clone();
-
     let items = log_state_value.iter().map(|itm| {
         let itm = itm.clone();
 
         let dt = DateTimeAsMicroseconds::new(itm.timestamp);
-
+        let ctx_filter_value = ctx_filter_value.clone();
         let key_values: Vec<_> = itm
             .ctx
             .iter()
@@ -170,13 +219,7 @@ pub fn RenderLogs() -> Element {
                         style: "margin:0;padding:0; cursor:pointer;",
                         onclick: move |_| {
                             let mut filter = ctx_filter_value.trim().to_string();
-                            if !filter.is_empty() {
-                                filter.push_str(" and ");
-                            }
-                            filter.push_str(key.as_str());
-                            filter.push_str(":'");
-                            filter.push_str(value.as_str());
-                            filter.push_str("'");
+                            append_filter_condition(&mut filter, &key, &value);
                             ctx_filter.set(filter);
                         },
                         "{key}: '{value}'"
@@ -185,11 +228,22 @@ pub fn RenderLogs() -> Element {
             })
             .collect();
         let log_ball = render_log_ball(itm.level.clone());
+        let process_name = itm.process_name.clone();
         rsx! {
             tr { style: "border-top: 1px solid lightgray;",
                 td { {log_ball} }
                 td { style: "margin:0;padding:0", "{&dt.to_rfc3339()[..26]}" }
-                td { style: "margin:0;padding:0", "{itm.process_name}" }
+                td { style: "margin:0;padding:0",
+                    div {
+                        style: "cursor: pointer",
+                        onclick: move |_| {
+                            let mut filter = ctx_filter_value.trim().to_string();
+                            append_filter_condition(&mut filter, "Process", &process_name);
+                            ctx_filter.set(filter);
+                        },
+                        "{itm.process_name}"
+                    }
+                }
                 td { style: "margin:0;padding:0", "{itm.message}" }
                 td { {key_values.into_iter()} }
             }
@@ -209,6 +263,16 @@ pub fn RenderLogs() -> Element {
             {items}
         }
     }
+}
+
+fn append_filter_condition(filter: &mut String, key: &str, value: &str) {
+    if !filter.is_empty() {
+        filter.push_str(" and ");
+    }
+    filter.push_str(key);
+    filter.push_str(":'");
+    filter.push_str(value);
+    filter.push_str("'");
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
@@ -265,6 +329,74 @@ fn load<'s>(
 
         main_state.write().set_logs_data(Some(result));
     });
+}
+
+pub fn search_as_text(
+    mut main_state: Signal<MainState>,
+    env: Rc<String>,
+    hours_before: i64,
+    phrase: String,
+) {
+    spawn(async move {
+        let result = search_logs(env.to_string(), hours_before, phrase)
+            .await
+            .unwrap();
+
+        main_state.write().set_logs_data(Some(result));
+    });
+}
+
+#[server]
+pub async fn search_logs(
+    env: String,
+    hours_before: i64,
+    phrase: String,
+) -> Result<Vec<LogApiItem>, ServerFnError> {
+    use crate::my_logger_grpc::*;
+    let mut from_time = DateTimeAsMicroseconds::now();
+    let to_time = from_time.clone();
+    from_time.add_hours(-hours_before);
+
+    let result = crate::APP_CTX
+        .get_client(env.as_str())
+        .await
+        .scan_and_search(ScanAndSearchRequest {
+            tenant_id: "Default".to_string(),
+            from_time: from_time.unix_microseconds as u64,
+            to_time: to_time.unix_microseconds as u64,
+            take: 200,
+            phrase,
+        })
+        .await
+        .unwrap();
+
+    let result = match result {
+        Some(result) => result
+            .into_iter()
+            .map(|itm| {
+                let level: LogApiLevel = (&itm.level()).into();
+
+                LogApiItem {
+                    timestamp: itm.timestamp,
+                    tenant_id: itm.tenant_id,
+                    process_name: itm.process_name,
+                    message: itm.message,
+                    level,
+                    ctx: itm
+                        .ctx
+                        .into_iter()
+                        .map(|itm| LogEventContextApiModel {
+                            key: itm.key,
+                            value: itm.value,
+                        })
+                        .collect(),
+                }
+            })
+            .collect(),
+        None => vec![],
+    };
+
+    Ok(result)
 }
 
 #[server]
