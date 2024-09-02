@@ -24,7 +24,7 @@ jobs:
 
       - name: Build the app        
         run: |
-          export GIT_HUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          export GIT_HUB_TOKEN=${{ secrets.PUBLISH_TOKEN }}
           dx build --platform fullstack --release
 
       - name: Upload Build Artifacts
