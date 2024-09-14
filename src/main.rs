@@ -1,22 +1,23 @@
 #![allow(non_snake_case)]
 
+mod states;
+
 #[cfg(feature = "server")]
 use crate::app_ctx::AppContext;
 use crate::{
     dialogs::{DialogState, RenderDialog},
-    main_state::MainState,
+    states::*,
     views::*,
 };
 
 use dioxus::prelude::*;
-use main_state::ActiveMenu;
 
 #[cfg(feature = "server")]
 mod app_ctx;
 #[cfg(feature = "server")]
 mod grpc_client;
 mod log_event_context_parser;
-mod main_state;
+
 #[cfg(feature = "server")]
 mod settings_model;
 mod views;
@@ -49,6 +50,7 @@ fn main() {
 #[component]
 fn App() -> Element {
     use_context_provider(|| Signal::new(MainState::new()));
+    use_context_provider(|| Signal::new(LocationState::Logs));
     use_context_provider(|| Signal::new(DialogState::None));
 
     let mut main_state = consume_context::<Signal<MainState>>();
@@ -89,19 +91,25 @@ fn App() -> Element {
 
 #[component]
 fn ActiveApp() -> Element {
-    let main_state = consume_context::<Signal<MainState>>();
+    let location_state_value = {
+        let location_state = consume_context::<Signal<LocationState>>();
+        let value = location_state.read();
+        value.copy_state()
+    };
 
-    let main_state_value = main_state.read();
-
-    let right_panel = match main_state_value.menu.clone() {
-        ActiveMenu::Dashboard => rsx! {
+    let right_panel = match location_state_value {
+        LocationState::Dashboard => rsx! {
             RenderDashboard {}
         },
-        ActiveMenu::Logs => rsx! {
+        LocationState::Logs => rsx! {
             RenderLogs {}
         },
-        ActiveMenu::Settings(_) => rsx! {
+        LocationState::Settings => rsx! {
             RenderSettings {}
+        },
+
+        LocationState::IgnoreSingleEvents => rsx! {
+            div {}
         },
     };
 

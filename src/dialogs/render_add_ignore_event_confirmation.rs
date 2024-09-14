@@ -1,9 +1,6 @@
 use std::rc::Rc;
 
-use crate::{
-    main_state::{ActiveMenu, MainState},
-    IgnoreEventApiModel, LogApiLevel,
-};
+use crate::{states::*, IgnoreEventApiModel, LogApiLevel};
 use dioxus::prelude::*;
 
 use super::DialogState;
@@ -102,7 +99,7 @@ pub fn render_add_ignore_event_confirmation(
                                 )
                                 .await
                                 .unwrap();
-                            main_state.write().set_menu(ActiveMenu::Settings(None));
+                            main_state.write().ignore_events = None;
                             dialog_state.set(DialogState::None);
                         });
                     },

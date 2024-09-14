@@ -1,26 +1,37 @@
 use dioxus::prelude::*;
 
-use crate::main_state::{ActiveMenu, MainState};
+use crate::LocationState;
 
 const CLASS_NAME: &str = "menu-item-active";
 #[component]
 pub fn LeftPanel() -> Element {
-    let mut main_state = consume_context::<Signal<MainState>>();
+    let mut location_state = consume_context::<Signal<LocationState>>();
 
     let mut dashboard_active = "";
     let mut logs_active = "";
     let mut settings_active = "";
+    let mut ignore_single_events_active = "";
 
-    match main_state.read().menu.clone() {
-        ActiveMenu::Dashboard => {
+    let location_state_value = {
+        let location_state = consume_context::<Signal<LocationState>>();
+        let value = location_state.read();
+        value.copy_state()
+    };
+
+    match location_state_value {
+        LocationState::Dashboard => {
             dashboard_active = CLASS_NAME;
         }
-        ActiveMenu::Logs => {
+        LocationState::Logs => {
             logs_active = CLASS_NAME;
         }
 
-        ActiveMenu::Settings(_) => {
+        LocationState::Settings => {
             settings_active = CLASS_NAME;
+        }
+
+        LocationState::IgnoreSingleEvents => {
+            ignore_single_events_active = CLASS_NAME;
         }
     }
 
@@ -34,23 +45,38 @@ pub fn LeftPanel() -> Element {
         div {
             class: "menu-item {dashboard_active}",
             onclick: move |_| {
-                main_state.write().set_menu(ActiveMenu::Dashboard);
+                if !location_state_value.is_dashboard() {
+                    location_state.set(LocationState::Dashboard);
+                }
             },
             "Dashboard"
         }
         div {
             class: "menu-item {logs_active}",
             onclick: move |_| {
-                main_state.write().set_menu(ActiveMenu::Logs);
+                if !location_state_value.is_logs() {
+                    location_state.set(LocationState::Logs);
+                }
             },
             "Logs"
         }
         div {
             class: "menu-item {settings_active}",
             onclick: move |_| {
-                main_state.write().set_menu(ActiveMenu::Settings(None));
+                if !location_state_value.is_settings() {
+                    location_state.set(LocationState::Settings);
+                }
             },
             "Settings"
+        }
+        div {
+            class: "menu-item {ignore_single_events_active}",
+            onclick: move |_| {
+                if !location_state_value.is_ignore_single_events() {
+                    location_state.set(LocationState::IgnoreSingleEvents);
+                }
+            },
+            "Ignore Single Events"
         }
     }
 }

@@ -1,7 +1,4 @@
-use crate::{
-    main_state::{ActiveMenu, MainState},
-    IgnoreEventApiModel,
-};
+use crate::{states::*, IgnoreEventApiModel};
 use dioxus::prelude::*;
 use std::rc::Rc;
 
@@ -34,7 +31,7 @@ pub fn render_delete_ignore_event_confirmation(
                         let env = env.clone();
                         spawn(async move {
                             delete_ignore_event(env.to_string(), itm_to_request).await.unwrap();
-                            main_state.write().set_menu(ActiveMenu::Settings(None));
+                            main_state.write().ignore_events = None;
                             dialog_state.set(DialogState::None)
                         });
                     },

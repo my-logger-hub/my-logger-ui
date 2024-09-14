@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::main_state::MainState;
+use crate::states::*;
 
 use super::*;
 

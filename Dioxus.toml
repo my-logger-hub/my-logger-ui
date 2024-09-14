@@ -35,7 +35,7 @@ index_on_404 = true
 style = ["/styled.css", "/app.css"]
 
 # Javascript code file
-script = ["/chart.js"]
+script = ["/chart.js", "https://www.gstatic.com/charts/loader.js"]
 
 [web.resource.dev]
 

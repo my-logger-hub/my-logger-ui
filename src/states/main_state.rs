@@ -1,52 +1,24 @@
 use std::rc::Rc;
 
 use crate::{DashboardItem, IgnoreEventApiModel, LogApiItem};
-#[derive(Clone)]
-pub enum ActiveMenu {
-    Dashboard,
-    Logs,
-    Settings(Option<Vec<Rc<IgnoreEventApiModel>>>),
-}
-
-impl ActiveMenu {
-    pub fn unwrap_ignore_events(&self) -> Option<Vec<Rc<IgnoreEventApiModel>>> {
-        match self {
-            Self::Settings(value) => value.clone(),
-            _ => {
-                panic!("MainState::unwrap_ignore_events called on non-Settings variant")
-            }
-        }
-    }
-
-    pub fn is_settings(&self) -> bool {
-        match self {
-            Self::Settings(_) => true,
-            _ => false,
-        }
-    }
-}
 
 pub struct MainState {
-    pub menu: ActiveMenu,
     pub selected_env: Rc<String>,
     pub envs: Option<Vec<Rc<String>>>,
     pub logs_data: Option<Rc<Vec<LogApiItem>>>,
     pub dashboard_data: Option<DashboardItem>,
+    pub ignore_events: Option<Vec<Rc<IgnoreEventApiModel>>>,
 }
 
 impl MainState {
     pub fn new() -> Self {
         Self {
-            menu: ActiveMenu::Logs,
             selected_env: Rc::new("".to_string()),
             envs: None,
             logs_data: None,
             dashboard_data: None,
+            ignore_events: None,
         }
-    }
-
-    pub fn set_menu(&mut self, menu: ActiveMenu) {
-        self.menu = menu;
     }
 
     pub fn has_envs(&self) -> bool {
@@ -71,9 +43,7 @@ impl MainState {
             self.selected_env = found_value.clone();
             self.logs_data = None;
             self.dashboard_data = None;
-            if self.menu.is_settings() {
-                self.menu = ActiveMenu::Settings(None);
-            }
+            self.ignore_events = None;
         }
     }
 

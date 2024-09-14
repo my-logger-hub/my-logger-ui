@@ -1,9 +1,9 @@
-use std::rc::Rc;
+use std::{collections::BTreeMap, rc::Rc};
 
 use dioxus::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::main_state::MainState;
+use crate::states::*;
 
 #[component]
 pub fn RenderDashboard() -> Element {
@@ -47,6 +47,37 @@ pub fn RenderDashboard() -> Element {
 
     let dashboard_data = dashboard_data.unwrap();
 
+    let mut hourly_data_to_render = BTreeMap::new();
+
+    for itm in dashboard_data.hourly.iter() {
+        if !hourly_data_to_render.contains_key(&itm.HourKey) {
+            hourly_data_to_render.insert(itm.HourKey, HourlyTotalData::default());
+        }
+
+        if let Some(data) = hourly_data_to_render.get_mut(&itm.HourKey) {
+            data.info += itm.info;
+            data.warning += itm.warning;
+            data.error += itm.error;
+            data.fatal += itm.fatal;
+            data.debug += itm.debug;
+        }
+    }
+
+    let mut js_error_line = String::new();
+
+    for (key, value) in hourly_data_to_render.iter() {
+        if js_error_line.len() > 0 {
+            js_error_line.push_str(",");
+        }
+        js_error_line.push_str(
+            format!(
+                "['{key}', {}, {}, {}, {}, {}]",
+                value.fatal, value.error, value.warning, value.info, value.debug
+            )
+            .as_str(),
+        );
+    }
+
     let mut javascript = format!(
         "var yValues = [{}, {}, {}, {}, {}];",
         dashboard_data.info_count,
@@ -80,38 +111,42 @@ pub fn RenderDashboard() -> Element {
       });"#,
     );
 
+    let javascript_2 = r#"
+
+      google.charts.load('current', {'packages':['bar']});
+
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+
+         var data = google.visualization.arrayToDataTable([
+          ['Amount','FatalError', 'Error',  'Warning', 'Info', 'Debug'],
+          ####
+        ]);
+
+        var options = {
+          chart: {
+            title: 'Errors statistics',
+            subtitle: 'per hour',
+   
+          },
+          colors: ['black', 'red',  'orange', 'darkgreen', 'gray']
+        };
+
+        var chart = new google.charts.Bar(document.getElementById('errorsChart'));
+
+        chart.draw(data, google.charts.Bar.convertOptions(options));
+      }
+    
+    "#;
+
+    let javascript_2 = javascript_2.replace("####", js_error_line.as_str());
+
     rsx! {
-        {select},
-        div { style: "width:400px; height:400px",
-            canvas { id: "myChart", style: "width:400px; height:400px" }
-            script { {javascript} }
-        }
+        div { id: "errorsChart", style: "width:100%; height:400px" }
+        script { {javascript_2} }
     }
 }
-
-/*
-fn request_data<'s>(cx: &'s Scope<'s>, data: &UseState<Option<StatisticData>>, hours: i64) {
-    let data = data.to_owned();
-    cx.spawn(async move {
-        let grpc_client = APP_CTX.get_my_logger_grpc_client().await;
-
-        let mut from_time = DateTimeAsMicroseconds::now();
-
-        from_time.add_hours(-hours);
-
-        let a = grpc_client
-            .get_statistic(GetStatisticsRequest {
-                tenant_id: "Default".to_string(),
-                from_time: from_time.unix_microseconds,
-                to_time: 0,
-            })
-            .await
-            .unwrap();
-
-        data.set(Some(a));
-    });
-}
- */
 
 fn request_data(
     env: Rc<String>,
@@ -136,6 +171,27 @@ pub struct DashboardItem {
     pub error_count: usize,
     pub fatal_count: usize,
     pub debug_count: usize,
+
+    pub hourly: Vec<HourlyStatisticsHttpModel>,
+}
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct HourlyStatisticsHttpModel {
+    pub HourKey: u64,
+    app: String,
+    info: u32,
+    warning: u32,
+    error: u32,
+    fatal: u32,
+    debug: u32,
+}
+
+#[derive(Default)]
+pub struct HourlyTotalData {
+    info: u32,
+    warning: u32,
+    error: u32,
+    fatal: u32,
+    debug: u32,
 }
 
 #[server]
@@ -150,9 +206,9 @@ pub async fn get_dashboard(
 
     from_time.add_minutes(-minutes_before);
 
-    let result = crate::APP_CTX
-        .get_client(env.as_str())
-        .await
+    let client = crate::APP_CTX.get_client(env.as_str()).await;
+
+    let result = client
         .get_statistic(GetStatisticsRequest {
             tenant_id: "Default".to_string(),
             from_time: from_time.unix_microseconds,
@@ -161,11 +217,30 @@ pub async fn get_dashboard(
         .await
         .unwrap();
 
+    let items = client
+        .get_hourly_statistics(GetHourlyStatisticsRequest { amount_of_hours: 8 })
+        .await
+        .unwrap()
+        .unwrap_or_default();
+
     Ok(DashboardItem {
         info_count: result.info_count as usize,
         warning_count: result.warning_count as usize,
         error_count: result.error_count as usize,
         fatal_count: result.fatal_count as usize,
         debug_count: result.debug_count as usize,
+
+        hourly: items
+            .into_iter()
+            .map(|itm| HourlyStatisticsHttpModel {
+                HourKey: itm.hour_key,
+                app: itm.app,
+                info: itm.info_count,
+                warning: itm.warning_count,
+                error: itm.error_count,
+                fatal: itm.fatal_count,
+                debug: itm.debug_count,
+            })
+            .collect(),
     })
 }

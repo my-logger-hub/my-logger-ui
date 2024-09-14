@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 use serde::{Deserialize, Serialize};
 
-use crate::{main_state::MainState, views::render_log_ball};
+use crate::{states::*, views::*};
 
 #[derive(Debug, Clone, Copy)]
 pub enum SelectedLevel {

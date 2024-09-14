@@ -3,7 +3,7 @@ use std::rc::Rc;
 use dioxus::prelude::*;
 use serde::*;
 
-use crate::{dialogs::DialogState, main_state::*, render_log_ball, LogApiLevel};
+use crate::{dialogs::DialogState, render_log_ball, states::*, LogApiLevel};
 
 #[component]
 pub fn RenderSettings() -> Element {
@@ -15,7 +15,7 @@ pub fn RenderSettings() -> Element {
         let main_state_read_access = main_state.read();
 
         (
-            main_state_read_access.menu.unwrap_ignore_events(),
+            main_state_read_access.ignore_events.clone(),
             main_state_read_access.selected_env.clone(),
         )
     };
@@ -115,9 +115,7 @@ fn load_ignore_events(env: Rc<String>, main_state: &Signal<MainState>) {
 
         let result = result.into_iter().map(|itm| Rc::new(itm)).collect();
 
-        main_state
-            .write()
-            .set_menu(ActiveMenu::Settings(Some(result)));
+        main_state.write().ignore_events = Some(result);
     });
 }
 
