@@ -50,7 +50,7 @@ fn main() {
 #[component]
 fn App() -> Element {
     use_context_provider(|| Signal::new(MainState::new()));
-    use_context_provider(|| Signal::new(LocationState::Logs));
+    use_context_provider(|| Signal::new(LocationState::Dashboard));
     use_context_provider(|| Signal::new(DialogState::None));
 
     let mut main_state = consume_context::<Signal<MainState>>();

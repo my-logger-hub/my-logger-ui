@@ -128,3 +128,23 @@ body {
     background-color: #ffffffeb;
     z-index: 1000;
 }
+
+.graph-wrapper {
+    width: 100%
+}
+
+.graph-errors {
+    background-color: red;
+    height: 3px;
+}
+
+
+.graph-fatal-errors {
+    background-color: rgb(86, 0, 0);
+    height: 3px;
+}
+
+.graph-fatal-warnings {
+    background-color: orange;
+    height: 3px;
+}
