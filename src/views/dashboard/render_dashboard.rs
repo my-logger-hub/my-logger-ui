@@ -11,7 +11,7 @@ pub fn RenderDashboard() -> Element {
 
     let dashboard_data = main_state.read().dashboard_data.clone();
 
-    let env = main_state.read().selected_env.clone();
+    let env = main_state.read().get_selected_env();
 
     //let data_access = data.get();
     if dashboard_data.is_none() {

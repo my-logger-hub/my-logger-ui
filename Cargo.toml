@@ -23,6 +23,7 @@ server = [
     "flurl",
     "my-settings-reader",
     "my-ssh",
+    "dioxus-utils/server",
 ]
 web = ["dioxus/web"]
 
@@ -40,7 +41,6 @@ my-grpc-extensions = { tag = "0.6.2", git = "https://github.com/MyJetTools/my-gr
 dioxus-utils = { tag = "0.1.0", git = "https://github.com/MyJetTools/dioxus-utils.git", features = [
     "fullstack",
 ] }
-
 
 settings-utils = { tag = "0.1.1", git = "https://github.com/MyJetTools/settings-utils.git" }
 dioxus = { version = "0.5", features = ["fullstack", "router"] }

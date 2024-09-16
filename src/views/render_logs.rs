@@ -95,7 +95,7 @@ pub fn RenderLogs() -> Element {
 
     let main_state = consume_context::<Signal<MainState>>();
 
-    let env = main_state.read().selected_env.clone();
+    let env = main_state.read().get_selected_env();
     let env_on_click = env.clone();
 
     let search_placeholder = match &*search_type.read() {
