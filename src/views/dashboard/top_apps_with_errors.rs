@@ -9,6 +9,10 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
     let mut max_errors = 0;
 
     for itm in hourly_statistics {
+        if itm.error == 0 && itm.warning == 0 && itm.fatal == 0 {
+            continue;
+        }
+
         if !by_hour_keys.contains_key(&itm.hour_key) {
             by_hour_keys.insert(itm.hour_key, BTreeMap::default());
         }
