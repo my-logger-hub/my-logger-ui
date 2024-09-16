@@ -5,8 +5,6 @@ use crate::LocationState;
 const CLASS_NAME: &str = "menu-item-active";
 #[component]
 pub fn LeftPanel() -> Element {
-    let mut location_state = consume_context::<Signal<LocationState>>();
-
     let mut dashboard_active = "";
     let mut logs_active = "";
     let mut settings_active = "";
@@ -42,40 +40,16 @@ pub fn LeftPanel() -> Element {
         }
         br {}
         div { style: "padding: 5px" }
-        div {
-            class: "menu-item {dashboard_active}",
-            onclick: move |_| {
-                if !location_state_value.is_dashboard() {
-                    location_state.set(LocationState::Dashboard);
-                }
-            },
-            "Dashboard"
-        }
-        div {
-            class: "menu-item {logs_active}",
-            onclick: move |_| {
-                if !location_state_value.is_logs() {
-                    location_state.set(LocationState::Logs);
-                }
-            },
-            "Logs"
-        }
-        div {
-            class: "menu-item {settings_active}",
-            onclick: move |_| {
-                if !location_state_value.is_settings() {
-                    location_state.set(LocationState::Settings);
-                }
-            },
-            "Settings"
-        }
-        div {
+
+        Link { class: "menu-item {dashboard_active}", to: "/", "Dashboard" }
+
+        Link { class: "menu-item {logs_active}", to: "/logs", "Logs" }
+
+        Link { class: "menu-item {settings_active}", to: "/settings", "Settings" }
+
+        Link {
             class: "menu-item {ignore_single_events_active}",
-            onclick: move |_| {
-                if !location_state_value.is_ignore_single_events() {
-                    location_state.set(LocationState::IgnoreSingleEvents);
-                }
-            },
+            to: "/ignore_single_events",
             "Ignore Single Events"
         }
     }

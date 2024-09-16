@@ -16,6 +16,33 @@ pub enum SelectedLevel {
     FatalError,
     Debug,
 }
+
+impl SelectedLevel {
+    pub fn from_str(src: &str) -> Self {
+        if rust_extensions::str_utils::compare_strings_case_insensitive("error", src) {
+            return SelectedLevel::Error;
+        }
+
+        if rust_extensions::str_utils::compare_strings_case_insensitive("fatal", src) {
+            return SelectedLevel::FatalError;
+        }
+
+        if rust_extensions::str_utils::compare_strings_case_insensitive("warning", src) {
+            return SelectedLevel::Warning;
+        }
+
+        if rust_extensions::str_utils::compare_strings_case_insensitive("info", src) {
+            return SelectedLevel::Info;
+        }
+
+        if rust_extensions::str_utils::compare_strings_case_insensitive("debug", src) {
+            return SelectedLevel::Debug;
+        }
+
+        SelectedLevel::All
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum SearchType {
     Ctx,
@@ -35,10 +62,26 @@ impl HoursAgo {
 pub fn RenderLogs() -> Element {
     let main_state = consume_context::<Signal<MainState>>();
     let mut search_type = use_signal(|| SearchType::Ctx);
-    let mut log_level_filter: Signal<SelectedLevel, _> = use_signal(|| SelectedLevel::All);
+    let mut log_level_filter: Signal<SelectedLevel, _> = use_signal(|| {
+        let level = dioxus_utils::js::GlobalAppSettings::get_local_storage()
+            .get("level")
+            .unwrap_or_default();
+
+        SelectedLevel::from_str(&level)
+    });
     let mut hours_ago_filter: Signal<HoursAgo, _> = use_signal(|| HoursAgo(2));
 
-    let mut ctx_filter: Signal<String, _> = use_signal(|| "".to_string());
+    let mut ctx_filter: Signal<String, _> = use_signal(|| {
+        let app = dioxus_utils::js::GlobalAppSettings::get_local_storage()
+            .get("app")
+            .unwrap_or_default();
+
+        if app.len() > 0 {
+            return format!("Application='{}'", app);
+        }
+
+        "".to_string()
+    });
 
     let logs_data = main_state.read().logs_data.clone();
 

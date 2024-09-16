@@ -2,6 +2,8 @@ use std::collections::BTreeMap;
 
 use dioxus::prelude::*;
 
+use crate::Route;
+
 use super::HourlyStatisticsHttpModel;
 pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpModel]) -> Element {
     let mut by_hour_keys = BTreeMap::new();
@@ -74,7 +76,13 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
                     td {
                         div {
                             "Errors: "
-                            {stat_data.errors.to_string()},
+                            Link {
+                                to: Route::Logs {
+                                    app: app.to_string(),
+                                    level: "error".to_string(),
+                                },
+                                {stat_data.errors.to_string()}
+                            }
                             div { class: "graph-wrapper",
                                 div {
                                     class: "graph-errors",
@@ -86,7 +94,14 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
                     td {
                         div {
                             "Fatal errors: "
-                            {stat_data.fatal_errors.to_string()},
+
+                            Link {
+                                to: Route::Logs {
+                                    app: app.to_string(),
+                                    level: "fatal".to_string(),
+                                },
+                                {stat_data.fatal_errors.to_string()}
+                            }
                             div { class: "graph-wrapper",
                                 div {
                                     class: "graph-fatal-errors",
@@ -99,7 +114,13 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
                     td {
                         div {
                             "Warnings: "
-                            {stat_data.warnings.to_string()},
+                            Link {
+                                to: Route::Logs {
+                                    app: app.to_string(),
+                                    level: "warning".to_string(),
+                                },
+                                {stat_data.warnings.to_string()}
+                            }
                             div { class: "graph-wrapper",
                                 div {
                                     class: "graph-fatal-warnings",

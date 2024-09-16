@@ -38,21 +38,68 @@ pub mod my_logger_grpc {
 
 // let cfg = dioxus::fullstack::Config::new().addr(([0, 0, 0, 0], 8080));
 
+#[derive(Routable, PartialEq, Clone)]
+enum Route {
+    #[route("/")]
+    Home {},
+
+    #[route("/logs?:app&:level")]
+    Logs { app: String, level: String },
+    #[route("/settings")]
+    Settings {},
+
+    #[route("/ignore_single_events")]
+    IgnoreSingleEvents {},
+}
+
 fn main() {
     let cfg = dioxus::fullstack::Config::new();
 
     #[cfg(feature = "server")]
     let cfg = cfg.addr(([0, 0, 0, 0], 9001));
 
-    LaunchBuilder::fullstack().with_cfg(cfg).launch(App)
+    LaunchBuilder::fullstack().with_cfg(cfg).launch(|| {
+        rsx! {
+            Router::<Route> {}
+        }
+    })
+}
+
+#[component]
+fn Home() -> Element {
+    use_context_provider(|| Signal::new(LocationState::Dashboard));
+
+    App()
+}
+
+#[component]
+fn Logs(app: String, level: String) -> Element {
+    use_context_provider(|| Signal::new(LocationState::Logs));
+
+    let web_local_storage = dioxus_utils::js::GlobalAppSettings::get_local_storage();
+    web_local_storage.set("app", app.as_str());
+    web_local_storage.set("level", level.as_str());
+
+    App()
+}
+
+#[component]
+fn Settings() -> Element {
+    use_context_provider(|| Signal::new(LocationState::Settings));
+
+    App()
+}
+
+#[component]
+fn IgnoreSingleEvents() -> Element {
+    use_context_provider(|| Signal::new(LocationState::IgnoreSingleEvents));
+    App()
 }
 
 #[component]
 fn App() -> Element {
     use_context_provider(|| Signal::new(MainState::new()));
-    use_context_provider(|| Signal::new(LocationState::Dashboard));
     use_context_provider(|| Signal::new(DialogState::None));
-
     let mut main_state = consume_context::<Signal<MainState>>();
 
     let has_envs = { main_state.read().has_envs() };
