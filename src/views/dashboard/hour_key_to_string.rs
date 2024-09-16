@@ -1,4 +1,4 @@
-pub fn hour_key_to_string(hour_key: u64) -> String {
+pub fn hour_key_to_string(hour_key: i64) -> String {
     let mut result = hour_key.to_string();
 
     result.insert(4, '-');

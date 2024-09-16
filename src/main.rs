@@ -3,6 +3,9 @@
 mod states;
 
 #[cfg(feature = "server")]
+mod date_key;
+
+#[cfg(feature = "server")]
 use crate::app_ctx::AppContext;
 use crate::{
     dialogs::{DialogState, RenderDialog},
@@ -117,7 +120,13 @@ fn App() -> Element {
     match &*data {
         Some(data) => match data {
             Ok(result) => {
-                main_state.write().set_environments(result.clone());
+                let times = dioxus_utils::js::eval("new Date().getTimezoneOffset()");
+
+                let time_zone = times.as_f64().unwrap() as i64;
+
+                main_state
+                    .write()
+                    .set_environments(result.clone(), time_zone);
                 return rsx! {
                     ActiveApp {}
                 };

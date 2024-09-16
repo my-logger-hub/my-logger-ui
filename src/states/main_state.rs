@@ -12,6 +12,7 @@ pub struct MainState {
     pub logs_data: Option<Rc<Vec<LogApiItem>>>,
     pub dashboard_data: Option<DashboardItem>,
     pub ignore_events: Option<Vec<Rc<IgnoreEventApiModel>>>,
+    pub time_zone: i64,
 }
 
 impl MainState {
@@ -24,6 +25,7 @@ impl MainState {
             dashboard_data: None,
             ignore_events: None,
             storage,
+            time_zone: 0,
         }
     }
 
@@ -31,10 +33,11 @@ impl MainState {
         self.envs.is_some()
     }
 
-    pub fn set_environments(&mut self, envs: Vec<String>) {
+    pub fn set_environments(&mut self, envs: Vec<String>, time_zone: i64) {
         let envs: Vec<Rc<String>> = envs.into_iter().map(Rc::new).collect();
 
         self.envs = Some(envs);
+        self.time_zone = time_zone;
     }
 
     pub fn active_env_changed(&mut self, value: &str) {

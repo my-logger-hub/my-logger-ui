@@ -83,7 +83,10 @@ pub fn RenderLogs() -> Element {
         "".to_string()
     });
 
-    let logs_data = main_state.read().logs_data.clone();
+    let (logs_data, time_zone) = {
+        let main_state = main_state.read();
+        (main_state.logs_data.clone(), main_state.time_zone)
+    };
 
     let log_level_value_as_str = format!("{:?}", log_level_filter.clone());
 
@@ -248,7 +251,8 @@ pub fn RenderLogs() -> Element {
     let items = log_state_value.iter().map(|itm| {
         let itm = itm.clone();
 
-        let dt = DateTimeAsMicroseconds::new(itm.timestamp);
+        let mut dt = DateTimeAsMicroseconds::new(itm.timestamp);
+        dt.add_minutes(-time_zone);
         let ctx_filter_value = ctx_filter_value.clone();
         let key_values: Vec<_> = itm
             .ctx
