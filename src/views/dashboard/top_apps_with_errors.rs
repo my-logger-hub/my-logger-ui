@@ -39,7 +39,7 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
 
     for (hour_key, items) in by_hour_keys.into_iter().rev() {
         items_to_render.push(rsx! {
-            tr {
+            tr { style: "background-color: lightgray;font-weight: bold;    box-shadow: 0 3px 3px #00000012;",
                 td { {super::hour_key_to_string(hour_key)} }
                 td {}
                 td {}
