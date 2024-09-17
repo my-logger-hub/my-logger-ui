@@ -13,6 +13,7 @@ use crate::{
 };
 
 use dioxus::prelude::*;
+use storage_settings::{log_level::STORAGE_LEVEL_KEY, time_range::TIME_RANGE_KEY};
 
 #[cfg(feature = "server")]
 mod app_ctx;
@@ -46,8 +47,15 @@ enum Route {
     #[route("/")]
     Home {},
 
-    #[route("/logs?:app&:level")]
-    Logs { app: String, level: String },
+    #[route("/logs")]
+    Logs,
+
+    #[route("/logs/ref?:app&:level&:time_range")]
+    LogsRef {
+        app: String,
+        level: String,
+        time_range: String,
+    },
     #[route("/settings")]
     Settings {},
 
@@ -76,7 +84,19 @@ fn Home() -> Element {
 }
 
 #[component]
-fn Logs(app: String, level: String) -> Element {
+fn Logs() -> Element {
+    use_context_provider(|| Signal::new(LocationState::Logs));
+
+    let web_local_storage = dioxus_utils::js::GlobalAppSettings::get_local_storage();
+    web_local_storage.delete("app");
+    web_local_storage.delete(STORAGE_LEVEL_KEY);
+    web_local_storage.delete(TIME_RANGE_KEY);
+
+    App()
+}
+
+#[component]
+fn LogsRef(app: String, level: String, time_range: String) -> Element {
     use_context_provider(|| Signal::new(LocationState::Logs));
 
     let web_local_storage = dioxus_utils::js::GlobalAppSettings::get_local_storage();
@@ -86,7 +106,11 @@ fn Logs(app: String, level: String) -> Element {
     }
 
     if level.len() > 0 {
-        web_local_storage.set("level", level.as_str());
+        web_local_storage.set(STORAGE_LEVEL_KEY, level.as_str());
+    }
+
+    if time_range.len() > 0 {
+        web_local_storage.set(TIME_RANGE_KEY, time_range.as_str());
     }
 
     App()

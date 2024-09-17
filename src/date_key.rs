@@ -75,7 +75,7 @@ impl DateHourKey {
 
         result.insert(4, '-');
         result.insert(7, '-');
-        result.insert(10, ' ');
+        result.insert(10, 'T');
         result.insert(13, ':');
         result.push_str(":00:00");
 

@@ -77,9 +77,10 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
                         div {
                             "Errors: "
                             Link {
-                                to: Route::Logs {
+                                to: Route::LogsRef {
                                     app: app.to_string(),
                                     level: "error".to_string(),
+                                    time_range: super::hour_key_to_string(hour_key),
                                 },
                                 {stat_data.errors.to_string()}
                             }
@@ -96,9 +97,10 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
                             "Fatal errors: "
 
                             Link {
-                                to: Route::Logs {
+                                to: Route::LogsRef {
                                     app: app.to_string(),
                                     level: "fatal".to_string(),
+                                    time_range: super::hour_key_to_string(hour_key),
                                 },
                                 {stat_data.fatal_errors.to_string()}
                             }
@@ -115,9 +117,10 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
                         div {
                             "Warnings: "
                             Link {
-                                to: Route::Logs {
+                                to: Route::LogsRef {
                                     app: app.to_string(),
                                     level: "warning".to_string(),
+                                    time_range: super::hour_key_to_string(hour_key),
                                 },
                                 {stat_data.warnings.to_string()}
                             }

@@ -24,7 +24,7 @@ pub fn RenderLogs() -> Element {
     let main_state = consume_context::<Signal<MainState>>();
     let mut search_type = use_signal(|| SearchType::Ctx);
 
-    let mut time_range_state = use_signal(|| TimeRange::HoursAgo(0));
+    let mut time_range_state = use_signal(|| crate::storage_settings::time_range::get());
 
     let time_range_value = Rc::new(time_range_state.read().clone());
 
@@ -90,6 +90,7 @@ pub fn RenderLogs() -> Element {
                                     value,
                                     time_zone,
                                     on_change: EventHandler::new(move |time_range: TimeRange| {
+                                        crate::storage_settings::time_range::save(&time_range);
                                         time_range_state.set(time_range);
                                     }),
                                 });
@@ -246,7 +247,7 @@ pub fn RenderLogs() -> Element {
 
     rsx! {
         {panel},
-        table { class: "table table-striped", style: "margin-top:36px",
+        table { class: "table table-striped", style: "margin-top: 61px;",
             tr {
                 th { style: "width: 24px;" }
                 th { "Time" }

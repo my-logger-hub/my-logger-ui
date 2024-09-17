@@ -147,7 +147,6 @@ pub fn edit_time_range_dialog(
                         "Exact hour"
                     }
                 }
-            
                 div { style: "margin-top:20px", {to_render} }
             },
             ok_button: rsx! {
@@ -179,6 +178,9 @@ pub enum TimeRange {
 }
 
 impl TimeRange {
+    pub fn default() -> Self {
+        TimeRange::HoursAgo(0)
+    }
     pub fn to_string(&self) -> String {
         match self {
             TimeRange::HoursAgo(v) => v.to_string(),
