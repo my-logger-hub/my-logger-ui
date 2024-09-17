@@ -5,43 +5,9 @@ use dioxus::prelude::*;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 use serde::{Deserialize, Serialize};
 
-use crate::{states::*, views::*};
+use crate::{states::*, storage_settings::log_level::SelectedLevel};
 
-#[derive(Debug, Clone, Copy)]
-pub enum SelectedLevel {
-    All,
-    Info,
-    Warning,
-    Error,
-    FatalError,
-    Debug,
-}
-
-impl SelectedLevel {
-    pub fn from_str(src: &str) -> Self {
-        if rust_extensions::str_utils::compare_strings_case_insensitive("error", src) {
-            return SelectedLevel::Error;
-        }
-
-        if rust_extensions::str_utils::compare_strings_case_insensitive("fatal", src) {
-            return SelectedLevel::FatalError;
-        }
-
-        if rust_extensions::str_utils::compare_strings_case_insensitive("warning", src) {
-            return SelectedLevel::Warning;
-        }
-
-        if rust_extensions::str_utils::compare_strings_case_insensitive("info", src) {
-            return SelectedLevel::Info;
-        }
-
-        if rust_extensions::str_utils::compare_strings_case_insensitive("debug", src) {
-            return SelectedLevel::Debug;
-        }
-
-        SelectedLevel::All
-    }
-}
+use super::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum SearchType {
@@ -62,13 +28,7 @@ impl HoursAgo {
 pub fn RenderLogs() -> Element {
     let main_state = consume_context::<Signal<MainState>>();
     let mut search_type = use_signal(|| SearchType::Ctx);
-    let mut log_level_filter: Signal<SelectedLevel, _> = use_signal(|| {
-        let level = dioxus_utils::js::GlobalAppSettings::get_local_storage()
-            .get("level")
-            .unwrap_or_default();
 
-        SelectedLevel::from_str(&level)
-    });
     let mut hours_ago_filter: Signal<HoursAgo, _> = use_signal(|| HoursAgo(2));
 
     let mut ctx_filter: Signal<String, _> = use_signal(|| {
@@ -87,8 +47,6 @@ pub fn RenderLogs() -> Element {
         let main_state = main_state.read();
         (main_state.logs_data.clone(), main_state.time_zone)
     };
-
-    let log_level_value_as_str = format!("{:?}", log_level_filter.clone());
 
     let hours_ago_value = hours_ago_filter.read().clone();
 
@@ -114,28 +72,7 @@ pub fn RenderLogs() -> Element {
                     div { class: "input-group input-group-sm",
                         span { class: "input-group-text", "Level:" }
 
-                        select {
-
-                            class: "form-control",
-
-                            onchange: move |e| {
-                                match e.value().as_str() {
-                                    "Info" => log_level_filter.set(SelectedLevel::Info),
-                                    "Warning" => log_level_filter.set(SelectedLevel::Warning),
-                                    "Error" => log_level_filter.set(SelectedLevel::Error),
-                                    "FatalError" => log_level_filter.set(SelectedLevel::FatalError),
-                                    "Debug" => log_level_filter.set(SelectedLevel::Debug),
-                                    _ => log_level_filter.set(SelectedLevel::All),
-                                }
-                            },
-                            value: "{log_level_value_as_str}",
-                            option { "All" }
-                            option { "Info" }
-                            option { "Warning" }
-                            option { "Error" }
-                            option { "FatalError" }
-                            option { "Debug" }
-                        }
+                        SelectLogLevel {}
                     }
                 }
                 td {
@@ -191,7 +128,6 @@ pub fn RenderLogs() -> Element {
                                 SearchType::Ctx => {
                                     load(
                                         env_on_click.clone(),
-                                        log_level_filter.read().clone(),
                                         hours_ago_filter.read().get_value(),
                                         main_state,
                                         crate::log_event_context_parser::parse_key_value_from_string(
@@ -221,7 +157,6 @@ pub fn RenderLogs() -> Element {
             SearchType::Ctx => {
                 load(
                     env.clone(),
-                    log_level_filter.read().clone(),
                     hours_ago_filter.read().get_value(),
                     main_state,
                     crate::log_event_context_parser::parse_key_value_from_string(
@@ -349,11 +284,11 @@ pub struct LogEventContextApiModel {
 
 fn load<'s>(
     env: Rc<String>,
-    log_level_filter: SelectedLevel,
     hours_before: i64,
     mut main_state: Signal<MainState>,
     context_keys: Vec<LogEventContextApiModel>,
 ) {
+    let log_level_filter = crate::storage_settings::log_level::get();
     let level = match log_level_filter {
         SelectedLevel::All => None,
         SelectedLevel::Info => Some(LogApiLevel::Info),

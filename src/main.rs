@@ -20,6 +20,7 @@ mod app_ctx;
 #[cfg(feature = "server")]
 mod grpc_client;
 mod log_event_context_parser;
+mod storage_settings;
 
 #[cfg(feature = "server")]
 mod settings_model;
@@ -80,8 +81,14 @@ fn Logs(app: String, level: String) -> Element {
     use_context_provider(|| Signal::new(LocationState::Logs));
 
     let web_local_storage = dioxus_utils::js::GlobalAppSettings::get_local_storage();
-    web_local_storage.set("app", app.as_str());
-    web_local_storage.set("level", level.as_str());
+
+    if app.len() > 0 {
+        web_local_storage.set("app", app.as_str());
+    }
+
+    if level.len() > 0 {
+        web_local_storage.set("level", level.as_str());
+    }
 
     App()
 }

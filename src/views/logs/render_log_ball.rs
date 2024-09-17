@@ -11,5 +11,7 @@ pub fn render_log_ball(level: LogApiLevel) -> Element {
         LogApiLevel::Debug => "gray-ball",
     };
 
-    rsx! { div { class: "{style}" } }
+    rsx! {
+        div { class: "{style}" }
+    }
 }
