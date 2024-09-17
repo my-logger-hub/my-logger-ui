@@ -9,6 +9,8 @@ pub fn RenderDialog() -> Element {
     let main_state = consume_context::<Signal<MainState>>();
     let mut dialog_state = consume_context::<Signal<DialogState>>();
 
+    let mut header = "Dialog";
+
     let dialog_content = match dialog_state.read().clone() {
         DialogState::None => {
             return rsx! {
@@ -24,6 +26,15 @@ pub fn RenderDialog() -> Element {
         DialogState::DeleteConfirmation { env, itm } => {
             render_delete_ignore_event_confirmation(env, itm, &main_state, &dialog_state)
         }
+
+        DialogState::EditTimeRange {
+            value,
+            time_zone,
+            on_change,
+        } => {
+            header = "Edit Time Range";
+            edit_time_range_dialog(dialog_state, value, on_change, time_zone)
+        }
     };
 
     rsx! {
@@ -32,7 +43,7 @@ pub fn RenderDialog() -> Element {
                 div { class: "modal-dialog",
                     div { class: "modal-content",
                         div { class: "modal-header",
-                            h5 { class: "model-title", "Header" }
+                            h5 { class: "model-title", {header} }
                             button {
                                 r#type: "button",
                                 class: "btn-close",

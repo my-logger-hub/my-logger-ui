@@ -149,3 +149,14 @@ body {
     background-color: orange;
     height: 3px;
 }
+
+.form-control-sm {
+    padding: 3px;
+    border-radius: 5px;
+}
+
+.form-select-sm {
+    padding: 3px;
+    border-radius: 5px;
+    border: 1px solid var(--vz-border-color);
+}

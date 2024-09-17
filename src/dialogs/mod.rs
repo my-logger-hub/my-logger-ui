@@ -6,3 +6,7 @@ mod render_delete_ignore_event_confirmation;
 pub use render_delete_ignore_event_confirmation::*;
 mod render_add_ignore_event_confirmation;
 pub use render_add_ignore_event_confirmation::*;
+mod edit_time_range_dialog;
+pub use edit_time_range_dialog::*;
+mod dialog_template;
+pub use dialog_template::*;

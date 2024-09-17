@@ -2,7 +2,6 @@
 
 mod states;
 
-#[cfg(feature = "server")]
 mod date_key;
 
 #[cfg(feature = "server")]

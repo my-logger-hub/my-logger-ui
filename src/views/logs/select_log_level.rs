@@ -21,11 +21,7 @@ pub fn SelectLogLevel() -> Element {
     });
     rsx! {
         select {
-
-            style: "padding: 0;border: 1px lightgray solid;border-left: 0;padding-left: 5px;width: 95px;",
-
             class: "form-select form-select-sm",
-
             oninput: move |e| {
                 let level = SelectedLevel::from_str(e.value().as_str());
                 crate::storage_settings::log_level::set(level);

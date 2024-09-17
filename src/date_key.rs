@@ -43,9 +43,24 @@ impl DateHourKey {
         result
     }
 
-    pub fn parse_from_str(value: &str) -> Option<Self> {
-        if value.len() != 10 {
+    pub fn try_from_str(value: &str) -> Option<Self> {
+        if value.len() < 10 {
             return None;
+        }
+
+        let dash_index = value.find('-');
+
+        if let Some(dash_index) = dash_index {
+            if dash_index != 4 {
+                return None;
+            }
+
+            //2024-09-17T11:00
+            let year = value[0..4].parse::<i64>().ok()?;
+            let month = value[5..7].parse::<i64>().ok()?;
+            let day = value[8..10].parse::<i64>().ok()?;
+            let hour = value[11..13].parse::<i64>().ok()?;
+            return Some(Self::from_components(year, month, day, hour));
         }
 
         let year = value[0..4].parse::<i64>().ok()?;
@@ -53,6 +68,29 @@ impl DateHourKey {
         let day = value[6..8].parse::<i64>().ok()?;
         let hour = value[8..10].parse::<i64>().ok()?;
         Some(Self::from_components(year, month, day, hour))
+    }
+
+    pub fn to_string(&self) -> String {
+        let mut result = self.0.to_string();
+
+        result.insert(4, '-');
+        result.insert(7, '-');
+        result.insert(10, ' ');
+        result.insert(13, ':');
+        result.push_str(":00:00");
+
+        result
+    }
+
+    pub fn to_html_input_date_local_string(&self) -> String {
+        let mut result = self.0.to_string();
+
+        result.insert(4, '-');
+        result.insert(7, '-');
+        result.insert(10, 'T');
+        result.push_str(":00");
+
+        result
     }
 }
 
@@ -95,5 +133,12 @@ impl From<DateHourKey> for DateTimeAsMicroseconds {
         };
 
         dt.try_into().unwrap()
+    }
+}
+
+impl<'s> From<&'s DateHourKey> for DateTimeAsMicroseconds {
+    fn from(value: &DateHourKey) -> Self {
+        let value = *value;
+        value.into()
     }
 }
