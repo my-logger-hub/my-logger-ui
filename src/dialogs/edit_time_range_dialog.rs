@@ -5,12 +5,13 @@ use crate::date_key::DateHourKey;
 use dioxus::prelude::*;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 
-pub fn edit_time_range_dialog(
-    mut dialog_state: Signal<DialogState>,
+#[component]
+pub fn EditTimeRangeDialog(
     value: TimeRange,
     on_change: EventHandler<TimeRange>,
     time_zone: i64,
 ) -> Element {
+    let mut dialog_state = consume_context::<Signal<DialogState>>();
     let mut time_range_state = use_signal(|| value);
 
     let mut temp_values = use_signal(|| {

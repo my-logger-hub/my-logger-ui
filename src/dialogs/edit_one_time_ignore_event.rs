@@ -6,11 +6,12 @@ use crate::{components::*, dialogs::DialogTemplate, LogApiLevel, OneTimeIgnoreHt
 
 use super::DialogState;
 
-pub fn edit_one_time_ignore_event(
-    mut dialog_state: Signal<DialogState>,
+#[component]
+pub fn EditOneTimeIgnoreDialog(
     value: Rc<OneTimeIgnoreHttpModel>,
     on_ok: EventHandler<OneTimeIgnoreHttpModel>,
 ) -> Element {
+    let mut dialog_state = consume_context::<Signal<DialogState>>();
     let mut state = use_signal(|| EditOneTimeIgnoreEventState::new(&value));
 
     let state_read_access = state.read();
@@ -102,9 +103,10 @@ pub fn edit_one_time_ignore_event(
                             }
                         }
                     }
-                    td {
+                    td { style: "vertical-align: middle;",
                         button {
-                            class: "btn btn-primary",
+                            style: "height: 71px;",
+                            class: "btn btn-outline-primary",
                             onclick: move |_| {
                                 let mut state_write_access = state.write();
                                 let key = state_write_access.current_key.to_string();

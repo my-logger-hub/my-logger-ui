@@ -3,10 +3,10 @@ use dioxus::prelude::*;
 
 use super::DialogState;
 
-pub fn render_add_ignore_event_confirmation(
-    mut dialog_state: Signal<DialogState>,
-    on_ok: EventHandler<IgnoreEventApiModel>,
-) -> Element {
+#[component]
+pub fn RenderAddIgnoreEvent(on_ok: EventHandler<IgnoreEventApiModel>) -> Element {
+    let mut dialog_state = consume_context::<Signal<DialogState>>();
+
     let mut state = use_signal(|| EventConfirmationState::new());
 
     rsx! {

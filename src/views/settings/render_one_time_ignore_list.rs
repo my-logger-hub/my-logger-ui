@@ -139,7 +139,7 @@ fn load_from_db(env: Rc<String>) {
     });
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
 pub struct OneTimeIgnoreHttpModel {
     pub id: String,
     pub levels: Vec<LogApiLevel>,

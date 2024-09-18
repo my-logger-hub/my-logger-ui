@@ -5,11 +5,9 @@ use dioxus::prelude::*;
 
 use super::DialogState;
 
-pub fn render_confirmation(
-    text: Rc<String>,
-    mut dialog_state: Signal<DialogState>,
-    on_ok: EventHandler<()>,
-) -> Element {
+#[component]
+pub fn RenderConfirmation(text: Rc<String>, on_ok: EventHandler<()>) -> Element {
+    let mut dialog_state = consume_context::<Signal<DialogState>>();
     rsx! {
         DialogTemplate {
             dialog_state,
