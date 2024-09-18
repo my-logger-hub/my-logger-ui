@@ -8,29 +8,30 @@ use crate::states::*;
 
 #[component]
 pub fn RenderDashboard() -> Element {
-    let main_state = consume_context::<Signal<MainState>>();
+    let mut main_state = consume_context::<Signal<MainState>>();
 
-    let (dashboard_data, time_zone) = {
-        let main_state_access = main_state.read();
+    let main_state_read_access = main_state.read();
 
-        (
-            main_state_access.dashboard_data.clone(),
-            main_state_access.time_zone,
-        )
+    let env = main_state_read_access.get_selected_env();
+    let time_zone = main_state.read().time_zone;
+
+    let dashboard_data = match main_state_read_access.dashboard_data.clone() {
+        DataState::None => {
+            drop(main_state_read_access);
+            main_state.write().dashboard_data = DataState::Loading;
+            request_data(env, main_state, time_zone);
+
+            return rsx! {
+                h1 { "Loading..." }
+            };
+        }
+        DataState::Loading => {
+            return rsx! {
+                h1 { "Loading..." }
+            };
+        }
+        DataState::Loaded(value) => value,
     };
-
-    let env = main_state.read().get_selected_env();
-
-    //let data_access = data.get();
-    if dashboard_data.is_none() {
-        request_data(env.clone(), main_state, time_zone);
-
-        return rsx! {
-            h1 { "Loading..." }
-        };
-    }
-
-    let dashboard_data = dashboard_data.unwrap();
 
     let hourly_graph = super::render_hourly_graph(&dashboard_data.hourly);
 
@@ -45,8 +46,7 @@ pub fn RenderDashboard() -> Element {
 fn request_data(env: Rc<String>, mut main_state: Signal<MainState>, time_zone: i64) {
     spawn(async move {
         let result = get_dashboard(env.to_string(), time_zone).await.unwrap();
-
-        main_state.write().set_dashboard_data(Some(result));
+        main_state.write().dashboard_data = DataState::Loaded(result);
     });
 }
 

@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use dioxus::prelude::EventHandler;
 
-use crate::IgnoreEventApiModel;
+use crate::{IgnoreEventApiModel, OneTimeIgnoreHttpModel};
 
 use super::TimeRange;
 
@@ -18,5 +18,10 @@ pub enum DialogState {
         value: TimeRange,
         time_zone: i64,
         on_change: EventHandler<TimeRange>,
+    },
+
+    EditOneTimeIgnoreEvent {
+        itm: Rc<OneTimeIgnoreHttpModel>,
+        on_ok: EventHandler<OneTimeIgnoreHttpModel>,
     },
 }

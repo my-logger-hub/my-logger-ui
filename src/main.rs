@@ -19,6 +19,7 @@ use models::LogPathDataModel;
 
 #[cfg(feature = "server")]
 mod app_ctx;
+mod components;
 #[cfg(feature = "server")]
 mod grpc_client;
 mod log_event_context_parser;
@@ -94,33 +95,6 @@ fn Logs(data: Vec<String>) -> Element {
     //crate::storage_settings::clean_all();
     App()
 }
-
-/*
-#[component]
-fn LogsRef(data: String) -> Element {
-    use_context_provider(|| Signal::new(LocationState::Logs));
-
-    let data = ;
-
-
-
-    let web_local_storage = dioxus_utils::js::GlobalAppSettings::get_local_storage();
-
-    if app.len() > 0 {
-        web_local_storage.set("app", app.as_str());
-    }
-
-    if level.len() > 0 {
-        web_local_storage.set(STORAGE_LEVEL_KEY, level.as_str());
-    }
-
-    if time_range.len() > 0 {
-        web_local_storage.set(TIME_RANGE_KEY, time_range.as_str());
-    }
-
-    App()
-}
- */
 
 #[component]
 fn Settings(data: Vec<String>) -> Element {

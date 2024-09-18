@@ -113,9 +113,10 @@ body {
     margin-left: 5px !important;
 }
 
-.form-control {
-    border-radius: 0 5px 5px 0;
-    border: 1px solid lightgray;
+.edit-wrapper {
+    border: 1px solid var(--vz-border-color);
+    border-radius: 5px;
+    padding: 7px;
 }
 
 #dialog-pad {
@@ -159,4 +160,8 @@ body {
     padding: 3px;
     border-radius: 5px;
     border: 1px solid var(--vz-border-color);
+}
+
+.modal-dialog {
+    box-shadow: 0 12px 47px #00000024;
 }

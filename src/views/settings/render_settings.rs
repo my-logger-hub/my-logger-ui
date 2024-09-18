@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::{states::*, RenderIgnoreList};
+use crate::*;
 
 use super::render_tabs::*;
 
@@ -19,7 +19,7 @@ pub fn RenderSettings() -> Element {
 
         LocationState::SettingsOneTimeIgnore => {
             rsx! {
-                h1 { "One time ignore" }
+                RenderOneTimeIgnoreList {}
             }
         }
 

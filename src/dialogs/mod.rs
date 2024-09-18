@@ -10,3 +10,5 @@ mod edit_time_range_dialog;
 pub use edit_time_range_dialog::*;
 mod dialog_template;
 pub use dialog_template::*;
+mod edit_one_time_ignore_event;
+pub use edit_one_time_ignore_event::*;

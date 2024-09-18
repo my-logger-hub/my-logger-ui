@@ -35,6 +35,11 @@ pub fn RenderDialog() -> Element {
             header = "Edit Time Range";
             edit_time_range_dialog(dialog_state, value, on_change, time_zone)
         }
+
+        DialogState::EditOneTimeIgnoreEvent { itm, on_ok } => {
+            header = "Edit OneTime Ignore Event";
+            edit_one_time_ignore_event(dialog_state, itm, on_ok)
+        }
     };
 
     rsx! {

@@ -31,7 +31,7 @@ pub fn render_delete_ignore_event_confirmation(
                         let env = env.clone();
                         spawn(async move {
                             delete_ignore_event(env.to_string(), itm_to_request).await.unwrap();
-                            main_state.write().ignore_events = None;
+                            main_state.write().reset_data();
                             dialog_state.set(DialogState::None)
                         });
                     },

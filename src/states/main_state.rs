@@ -2,16 +2,18 @@ use std::rc::Rc;
 
 use dioxus_utils::js::WebLocalStorage;
 
-use crate::{DashboardItem, IgnoreEventApiModel, LogApiItem};
+use crate::{DashboardItem, IgnoreEventApiModel, LogApiItem, OneTimeIgnoreHttpModel};
 
 pub const ENV_LOCAL_STORAGE_KEY: &str = "env";
+use super::DataState;
 
 pub struct MainState {
     pub storage: WebLocalStorage,
     pub envs: Option<Vec<Rc<String>>>,
     pub logs_data: Option<Rc<Vec<LogApiItem>>>,
-    pub dashboard_data: Option<DashboardItem>,
-    pub ignore_events: Option<Vec<Rc<IgnoreEventApiModel>>>,
+    pub dashboard_data: DataState<DashboardItem>,
+    pub ignore_events: DataState<Vec<Rc<IgnoreEventApiModel>>>,
+    pub one_time_ignore_events: DataState<Vec<Rc<OneTimeIgnoreHttpModel>>>,
     pub time_zone: i64,
 }
 
@@ -22,8 +24,9 @@ impl MainState {
         Self {
             envs: None,
             logs_data: None,
-            dashboard_data: None,
-            ignore_events: None,
+            dashboard_data: DataState::None,
+            ignore_events: DataState::None,
+            one_time_ignore_events: DataState::None,
             storage,
             time_zone: 0,
         }
@@ -42,9 +45,7 @@ impl MainState {
 
     pub fn active_env_changed(&mut self, value: &str) {
         dioxus_utils::js::GlobalAppSettings::get_local_storage().set(ENV_LOCAL_STORAGE_KEY, value);
-        self.logs_data = None;
-        self.dashboard_data = None;
-        self.ignore_events = None;
+        self.reset_data();
     }
 
     pub fn get_selected_env(&self) -> Rc<String> {
@@ -70,7 +71,10 @@ impl MainState {
         }
     }
 
-    pub fn set_dashboard_data(&mut self, value: Option<DashboardItem>) {
-        self.dashboard_data = value;
+    pub fn reset_data(&mut self) {
+        self.logs_data = None;
+        self.dashboard_data = DataState::None;
+        self.ignore_events = DataState::None;
+        self.one_time_ignore_events = DataState::None;
     }
 }

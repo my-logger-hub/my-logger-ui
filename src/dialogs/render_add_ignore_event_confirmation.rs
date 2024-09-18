@@ -99,7 +99,7 @@ pub fn render_add_ignore_event_confirmation(
                                 )
                                 .await
                                 .unwrap();
-                            main_state.write().ignore_events = None;
+                            main_state.write().reset_data();
                             dialog_state.set(DialogState::None);
                         });
                     },

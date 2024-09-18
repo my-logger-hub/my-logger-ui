@@ -15,6 +15,11 @@ use crate::{
 
 use super::*;
 
+use crate::components::*;
+
+#[cfg(feature = "server")]
+use crate::my_logger_grpc::LogLevelGrpcModel;
+
 #[derive(Debug, Clone, Copy)]
 pub enum SearchType {
     Ctx,
@@ -307,6 +312,51 @@ pub enum LogApiLevel {
     Debug,
 }
 
+impl LogApiLevel {
+    pub const ALL_LEVELS: [LogApiLevel; 5] = [
+        LogApiLevel::Info,
+        LogApiLevel::Warning,
+        LogApiLevel::Error,
+        LogApiLevel::FatalError,
+        LogApiLevel::Debug,
+    ];
+    pub fn as_str(&self) -> &str {
+        match self {
+            LogApiLevel::Info => "Info",
+            LogApiLevel::Warning => "Warning",
+            LogApiLevel::Error => "Error",
+            LogApiLevel::FatalError => "Fatal",
+            LogApiLevel::Debug => "Debug",
+        }
+    }
+}
+
+#[cfg(feature = "server")]
+impl Into<LogApiLevel> for crate::my_logger_grpc::LogLevelGrpcModel {
+    fn into(self) -> LogApiLevel {
+        match self {
+            LogLevelGrpcModel::Info => LogApiLevel::Info,
+            LogLevelGrpcModel::Warning => LogApiLevel::Warning,
+            LogLevelGrpcModel::Error => LogApiLevel::Error,
+            LogLevelGrpcModel::Fatal => LogApiLevel::FatalError,
+            LogLevelGrpcModel::Debug => LogApiLevel::Debug,
+        }
+    }
+}
+
+#[cfg(feature = "server")]
+impl Into<LogLevelGrpcModel> for LogApiLevel {
+    fn into(self) -> LogLevelGrpcModel {
+        match self {
+            LogApiLevel::Info => LogLevelGrpcModel::Info,
+            LogApiLevel::Warning => LogLevelGrpcModel::Warning,
+            LogApiLevel::Error => LogLevelGrpcModel::Error,
+            LogApiLevel::FatalError => LogLevelGrpcModel::Fatal,
+            LogApiLevel::Debug => LogLevelGrpcModel::Debug,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LogApiItem {
     pub timestamp: i64,
@@ -499,41 +549,3 @@ pub async fn load_logs(
 
     Ok(result)
 }
-
-/*
-
-button {
-                        class: "btn btn-primary btn-sm",
-
-                        onclick: move |_| {
-                            let mut main_state = consume_context::<Signal<MainState>>();
-                            main_state.write().set_logs_data(None);
-                            match search_type.read().clone() {
-                                SearchType::Ctx => {
-                                    load(
-                                        env_on_click.clone(),
-                                        &time_range_value_copy,
-                                        time_zone,
-                                        main_state,
-                                        crate::log_event_context_parser::parse_key_value_from_string(
-                                            ctx_filter_panel_value.as_str(),
-                                        ),
-                                    );
-                                }
-                                SearchType::Text => {
-                                    search_as_text(
-                                        main_state,
-                                        env_on_click.clone(),
-                                        &time_range_value_copy,
-                                        time_zone,
-                                        ctx_filter_panel_value.to_string(),
-                                    );
-                                }
-                            }
-                        },
-                        img {
-                            src: "/img/ico-refresh.svg",
-                            style: "width: 16px;"
-                        }
-                    }
-*/
