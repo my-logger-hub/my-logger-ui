@@ -7,8 +7,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     dialogs::{DialogState, TimeRange},
+    models::LogPathDataModel,
     states::*,
     storage_settings::log_level::SelectedLevel,
+    Route,
 };
 
 use super::*;
@@ -19,10 +21,25 @@ pub enum SearchType {
     Text,
 }
 
+impl SearchType {
+    pub fn is_ctx_search(&self) -> bool {
+        match self {
+            SearchType::Ctx => true,
+            SearchType::Text => false,
+        }
+    }
+}
+
 #[component]
 pub fn RenderLogs() -> Element {
     let main_state = consume_context::<Signal<MainState>>();
-    let mut search_type = use_signal(|| SearchType::Ctx);
+    let mut search_type = use_signal(|| {
+        if crate::storage_settings::ctx_search::get() {
+            SearchType::Ctx
+        } else {
+            SearchType::Text
+        }
+    });
 
     let mut time_range_state = use_signal(|| crate::storage_settings::time_range::get());
 
@@ -34,17 +51,8 @@ pub fn RenderLogs() -> Element {
         TimeRange::ExactHour(_) => "Get log from Hour:",
     };
 
-    let mut ctx_filter: Signal<String, _> = use_signal(|| {
-        let app = dioxus_utils::js::GlobalAppSettings::get_local_storage()
-            .get("app")
-            .unwrap_or_default();
-
-        if app.len() > 0 {
-            return format!("Application='{}'", app);
-        }
-
-        "".to_string()
-    });
+    let mut ctx_filter: Signal<String, _> =
+        use_signal(|| crate::storage_settings::search_line::get());
 
     let (logs_data, time_zone) = {
         let main_state = main_state.read();
@@ -90,7 +98,7 @@ pub fn RenderLogs() -> Element {
                                     value,
                                     time_zone,
                                     on_change: EventHandler::new(move |time_range: TimeRange| {
-                                        crate::storage_settings::time_range::save(&time_range);
+                                        crate::storage_settings::time_range::set(&time_range);
                                         time_range_state.set(time_range);
                                     }),
                                 });
@@ -104,11 +112,13 @@ pub fn RenderLogs() -> Element {
                             style: "width: 100px; border: 1px solid white;",
                             class: "form-select form-select-sm",
                             oninput: move |e| {
-                                match e.value().as_str() {
-                                    "ctx" => search_type.set(SearchType::Ctx),
-                                    "text" => search_type.set(SearchType::Text),
-                                    _ => {}
-                                }
+                                let value = match e.value().as_str() {
+                                    "ctx" => SearchType::Ctx,
+                                    "text" => SearchType::Text,
+                                    _ => SearchType::Ctx,
+                                };
+                                crate::storage_settings::ctx_search::set(value.is_ctx_search());
+                                search_type.set(value);
                             },
                             option { value: "ctx", "Ctx Search" }
                             option { value: "text", "Text Search" }
@@ -124,9 +134,19 @@ pub fn RenderLogs() -> Element {
                     }
                 }
                 td { style: "width: 32px;vertical-align: bottom;",
-                    button {
+                    Link {
                         class: "btn btn-primary btn-sm",
-
+                        to: Route::Logs {
+                            data: vec![
+                                LogPathDataModel {
+                                    is_ctx_search: search_type.read().is_ctx_search(),
+                                    search_string: ctx_filter_value.to_string(),
+                                    level: crate::storage_settings::log_level::get().into(),
+                                    time_range: time_range_value.to_string(),
+                                }
+                                    .to_base_64(),
+                            ],
+                        },
                         onclick: move |_| {
                             let mut main_state = consume_context::<Signal<MainState>>();
                             main_state.write().set_logs_data(None);
@@ -471,3 +491,41 @@ pub async fn load_logs(
 
     Ok(result)
 }
+
+/*
+
+button {
+                        class: "btn btn-primary btn-sm",
+
+                        onclick: move |_| {
+                            let mut main_state = consume_context::<Signal<MainState>>();
+                            main_state.write().set_logs_data(None);
+                            match search_type.read().clone() {
+                                SearchType::Ctx => {
+                                    load(
+                                        env_on_click.clone(),
+                                        &time_range_value_copy,
+                                        time_zone,
+                                        main_state,
+                                        crate::log_event_context_parser::parse_key_value_from_string(
+                                            ctx_filter_panel_value.as_str(),
+                                        ),
+                                    );
+                                }
+                                SearchType::Text => {
+                                    search_as_text(
+                                        main_state,
+                                        env_on_click.clone(),
+                                        &time_range_value_copy,
+                                        time_zone,
+                                        ctx_filter_panel_value.to_string(),
+                                    );
+                                }
+                            }
+                        },
+                        img {
+                            src: "/img/ico-refresh.svg",
+                            style: "width: 16px;"
+                        }
+                    }
+*/

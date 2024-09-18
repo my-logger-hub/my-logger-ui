@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use dioxus::prelude::*;
 
-use crate::Route;
+use crate::{models::LogPathDataModel, storage_settings::log_level::SelectedLevel, Route};
 
 use super::HourlyStatisticsHttpModel;
 pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpModel]) -> Element {
@@ -77,10 +77,16 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
                         div {
                             "Errors: "
                             Link {
-                                to: Route::LogsRef {
-                                    app: app.to_string(),
-                                    level: "error".to_string(),
-                                    time_range: super::hour_key_to_string(hour_key),
+                                to: Route::Logs {
+                                    data: vec![
+                                        LogPathDataModel {
+                                            is_ctx_search: true,
+                                            search_string: generate_app_line(&app),
+                                            level: SelectedLevel::Error.into(),
+                                            time_range: super::hour_key_to_string(hour_key),
+                                        }
+                                            .to_base_64(),
+                                    ],
                                 },
                                 {stat_data.errors.to_string()}
                             }
@@ -97,10 +103,16 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
                             "Fatal errors: "
 
                             Link {
-                                to: Route::LogsRef {
-                                    app: app.to_string(),
-                                    level: "fatal".to_string(),
-                                    time_range: super::hour_key_to_string(hour_key),
+                                to: Route::Logs {
+                                    data: vec![
+                                        LogPathDataModel {
+                                            is_ctx_search: true,
+                                            search_string: generate_app_line(&app),
+                                            level: SelectedLevel::FatalError.into(),
+                                            time_range: super::hour_key_to_string(hour_key),
+                                        }
+                                            .to_base_64(),
+                                    ],
                                 },
                                 {stat_data.fatal_errors.to_string()}
                             }
@@ -117,10 +129,16 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
                         div {
                             "Warnings: "
                             Link {
-                                to: Route::LogsRef {
-                                    app: app.to_string(),
-                                    level: "warning".to_string(),
-                                    time_range: super::hour_key_to_string(hour_key),
+                                to: Route::Logs {
+                                    data: vec![
+                                        LogPathDataModel {
+                                            is_ctx_search: true,
+                                            search_string: generate_app_line(&app),
+                                            level: SelectedLevel::Warning.into(),
+                                            time_range: super::hour_key_to_string(hour_key),
+                                        }
+                                            .to_base_64(),
+                                    ],
                                 },
                                 {stat_data.warnings.to_string()}
                             }
@@ -162,4 +180,8 @@ impl TotalStatistics {
     pub fn total(&self) -> u32 {
         self.errors + self.fatal_errors
     }
+}
+
+pub fn generate_app_line(app_name: &str) -> String {
+    format!("Application: '{}'", app_name)
 }

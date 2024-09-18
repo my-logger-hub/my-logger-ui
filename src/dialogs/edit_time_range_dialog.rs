@@ -217,4 +217,33 @@ impl TimeRange {
             }
         }
     }
+
+    pub fn from_str(value: &str) -> Self {
+        //2024-09-17T22:19 - 2024-09-17T23:19
+        if value.len() > 30 {
+            let from = value[..16].to_string();
+            let to = value[19..].to_string();
+
+            let from_dt = DateTimeAsMicroseconds::from_str(from.as_str());
+            let to_dt = DateTimeAsMicroseconds::from_str(to.as_str());
+
+            if from_dt.is_some() && to_dt.is_some() {
+                return TimeRange::Range(from, to);
+            }
+        }
+
+        let number = value.parse::<i32>();
+
+        if let Ok(number) = number {
+            return TimeRange::HoursAgo(number);
+        }
+
+        let date_hour_key = DateHourKey::try_from_str(value);
+
+        if let Some(date_hour_key) = date_hour_key {
+            return TimeRange::ExactHour(date_hour_key);
+        }
+
+        return TimeRange::default();
+    }
 }

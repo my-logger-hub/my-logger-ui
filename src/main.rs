@@ -4,6 +4,8 @@ mod states;
 
 mod date_key;
 
+mod models;
+
 #[cfg(feature = "server")]
 use crate::app_ctx::AppContext;
 use crate::{
@@ -13,7 +15,7 @@ use crate::{
 };
 
 use dioxus::prelude::*;
-use storage_settings::{log_level::STORAGE_LEVEL_KEY, time_range::TIME_RANGE_KEY};
+use models::LogPathDataModel;
 
 #[cfg(feature = "server")]
 mod app_ctx;
@@ -47,15 +49,9 @@ enum Route {
     #[route("/")]
     Home {},
 
-    #[route("/logs")]
-    Logs,
+    #[route("/logs/:..data")]
+    Logs { data: Vec<String> },
 
-    #[route("/logs/ref?:app&:level&:time_range")]
-    LogsRef {
-        app: String,
-        level: String,
-        time_range: String,
-    },
     #[route("/settings")]
     Settings {},
 
@@ -84,20 +80,30 @@ fn Home() -> Element {
 }
 
 #[component]
-fn Logs() -> Element {
+fn Logs(data: Vec<String>) -> Element {
     use_context_provider(|| Signal::new(LocationState::Logs));
 
-    let web_local_storage = dioxus_utils::js::GlobalAppSettings::get_local_storage();
-    web_local_storage.delete("app");
-    web_local_storage.delete(STORAGE_LEVEL_KEY);
-    web_local_storage.delete(TIME_RANGE_KEY);
+    if let Some(data) = data.get(0) {
+        if let Some(model) = LogPathDataModel::from_base_64(data.as_str()) {
+            crate::storage_settings::log_level::set(model.get_log_level());
+            crate::storage_settings::search_line::set(&model.search_string);
+            crate::storage_settings::ctx_search::set(model.is_ctx_search);
+            crate::storage_settings::time_range::set_as_str(&model.time_range);
+        }
+    }
 
+    //crate::storage_settings::clean_all();
     App()
 }
 
+/*
 #[component]
-fn LogsRef(app: String, level: String, time_range: String) -> Element {
+fn LogsRef(data: String) -> Element {
     use_context_provider(|| Signal::new(LocationState::Logs));
+
+    let data = ;
+
+
 
     let web_local_storage = dioxus_utils::js::GlobalAppSettings::get_local_storage();
 
@@ -115,6 +121,7 @@ fn LogsRef(app: String, level: String, time_range: String) -> Element {
 
     App()
 }
+ */
 
 #[component]
 fn Settings() -> Element {
