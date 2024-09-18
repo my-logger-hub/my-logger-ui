@@ -42,6 +42,8 @@ pub mod my_logger_grpc {
     tonic::include_proto!("my_logger");
 }
 
+const IGNORE_SINGLE_TIME_SUB_PATH: &str = "ignore-single-time";
+
 // let cfg = dioxus::fullstack::Config::new().addr(([0, 0, 0, 0], 8080));
 
 #[derive(Routable, PartialEq, Clone)]
@@ -52,8 +54,8 @@ enum Route {
     #[route("/logs/:..data")]
     Logs { data: Vec<String> },
 
-    #[route("/settings")]
-    Settings {},
+    #[route("/settings/:..data")]
+    Settings { data: Vec<String> },
 }
 
 fn main() {
@@ -121,9 +123,14 @@ fn LogsRef(data: String) -> Element {
  */
 
 #[component]
-fn Settings() -> Element {
-    use_context_provider(|| Signal::new(LocationState::Settings));
-
+fn Settings(data: Vec<String>) -> Element {
+    if let Some(data) = data.get(0) {
+        if data == IGNORE_SINGLE_TIME_SUB_PATH {
+            use_context_provider(|| Signal::new(LocationState::SettingsOneTimeIgnore));
+            return App();
+        }
+    }
+    use_context_provider(|| Signal::new(LocationState::SettingsIgnoreList));
     App()
 }
 
@@ -188,7 +195,10 @@ fn ActiveApp() -> Element {
         LocationState::Logs => rsx! {
             RenderLogs {}
         },
-        LocationState::Settings => rsx! {
+        LocationState::SettingsIgnoreList => rsx! {
+            RenderSettings {}
+        },
+        LocationState::SettingsOneTimeIgnore => rsx! {
             RenderSettings {}
         },
     };

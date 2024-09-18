@@ -23,7 +23,11 @@ pub fn LeftPanel() -> Element {
             logs_active = CLASS_NAME;
         }
 
-        LocationState::Settings => {
+        LocationState::SettingsIgnoreList => {
+            settings_active = CLASS_NAME;
+        }
+
+        LocationState::SettingsOneTimeIgnore => {
             settings_active = CLASS_NAME;
         }
     }

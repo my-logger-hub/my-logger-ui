@@ -3,10 +3,8 @@ use std::rc::Rc;
 use dioxus::prelude::*;
 use serde::*;
 
-use crate::{dialogs::DialogState, render_log_ball, states::*, LogApiLevel};
-
-#[component]
-pub fn RenderSettings() -> Element {
+use crate::{dialogs::DialogState, render_log_ball, LogApiLevel, MainState};
+pub fn RenderIgnoreList() -> Element {
     let mut dialog_state = consume_context::<Signal<DialogState>>();
 
     let main_state = consume_context::<Signal<MainState>>();
@@ -20,7 +18,7 @@ pub fn RenderSettings() -> Element {
         )
     };
 
-    let content = match ignore_events {
+    match ignore_events {
         Some(value) => {
             let table_content: Vec<_> = value
                 .into_iter()
@@ -56,7 +54,7 @@ pub fn RenderSettings() -> Element {
                 })
                 .collect();
 
-            rsx! {
+            return rsx! {
                 table { class: "table table-striped",
                     tr {
                         th { style: "width:25px" }
@@ -77,7 +75,7 @@ pub fn RenderSettings() -> Element {
 
                     {table_content.into_iter()}
                 }
-            }
+            };
         }
         None => {
             load_ignore_events(env.clone(), &main_state);
@@ -86,18 +84,6 @@ pub fn RenderSettings() -> Element {
             };
         }
     };
-
-    rsx! {
-        ul { class: "nav",
-            li {
-                style: "box-shadow: 1px 1px 1px lightgray; width:100%",
-                class: "nav-item",
-                a { class: "nav-link active", "Ignore list" }
-            }
-        }
-
-        {content}
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
