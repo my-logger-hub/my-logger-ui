@@ -15,9 +15,20 @@ pub fn SelectLogLevel(value: SelectedLevel, on_change: EventHandler<SelectedLeve
             }
         }
     });
+
+    let stl = match value {
+        SelectedLevel::All => "",
+        SelectedLevel::FatalError => "background: black; color:white;",
+        SelectedLevel::Error => "background: red; color:white;",
+        SelectedLevel::Warning => "background: orange;",
+        SelectedLevel::Info => "color: darkgreen;",
+        SelectedLevel::Debug => "background: lightgray;color: black;",
+    };
+
     rsx! {
         select {
             class: "form-select form-select-sm",
+            style: stl,
             oninput: move |e| {
                 let level = SelectedLevel::from_str(e.value().as_str());
                 on_change.call(level);
