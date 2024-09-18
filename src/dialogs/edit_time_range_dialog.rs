@@ -116,6 +116,7 @@ pub fn edit_time_range_dialog(
     rsx! {
 
         DialogTemplate {
+            header: "Edit time range",
             dialog_state: dialog_state.clone(),
             modal_body: rsx! {
                 div { class: "btn-group", style: "width: 100%;",

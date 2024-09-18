@@ -329,6 +329,17 @@ impl LogApiLevel {
             LogApiLevel::Debug => "Debug",
         }
     }
+
+    pub fn from_str(src: &str) -> LogApiLevel {
+        match src {
+            "Info" => LogApiLevel::Info,
+            "Warning" => LogApiLevel::Warning,
+            "Error" => LogApiLevel::Error,
+            "Fatal" => LogApiLevel::FatalError,
+            "Debug" => LogApiLevel::Debug,
+            _ => LogApiLevel::Info,
+        }
+    }
 }
 
 #[cfg(feature = "server")]

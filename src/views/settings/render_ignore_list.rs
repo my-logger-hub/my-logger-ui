@@ -44,7 +44,16 @@ pub fn RenderIgnoreList() -> Element {
         let level = format!("{:?}", itm.level);
         let log_ball = render_log_ball(itm.level.clone());
 
-        let env_cloned = env.clone();
+        let phrase: Rc<String> = format!(
+            "Are you sure you want to delete the ignore event for {:?} for application {} with marker{} ?",
+            itm.level,
+            itm.application,
+            itm.marker
+        ).into();
+
+        let itm_to_delete = itm.clone();
+        let env_delete = env.clone();
+        
         rsx! {
             tr {
                 td { {log_ball} }
@@ -57,10 +66,26 @@ pub fn RenderIgnoreList() -> Element {
                         style: "padding:2px 6px",
 
                         onclick: move |_| {
+                            let phrase = phrase.clone();
+                            let env_delete = env_delete.clone();
+                            let itm_to_delete = itm_to_delete.clone();
                             dialog_state
-                                .set(DialogState::DeleteConfirmation {
-                                    env: env_cloned.clone(),
-                                    itm: itm.clone(),
+                                .set(DialogState::Confirmation {
+                                    text: phrase,
+                                    on_ok: EventHandler::new(move |_| {
+                                        let env = env_delete.clone();
+                                        let itm_to_delete = itm_to_delete.clone();
+                                        spawn(async move {
+                                            delete_ignore_event(
+                                                    env.to_string(),
+                                                    itm_to_delete.as_ref().clone(),
+                                                )
+                                                .await
+                                                .unwrap();
+                                            main_state.write().reset_data();
+                                            dialog_state.set(DialogState::None)
+                                        });
+                                    }),
                                 });
                         },
                         "Delete"
@@ -82,7 +107,22 @@ pub fn RenderIgnoreList() -> Element {
                         class: "btn btn-sm btn-primary",
                         style: "padding:2px 6px",
                         onclick: move |_| {
-                            dialog_state.set(DialogState::AddIgnoreEvent(env.clone()));
+                            let env = env.clone();
+                            dialog_state
+                                .set(DialogState::AddIgnoreEvent {
+                                    on_ok: EventHandler::new(move |itm| {
+                                        let env = env.clone();
+                                        spawn(async move {
+                                            let env = env.clone();
+                                            spawn(async move {
+                                                add_ignore_event(env.to_string(), itm).await.unwrap();
+                                                main_state.write().reset_data();
+                                                dialog_state.set(DialogState::None);
+                                            });
+                                            main_state.write().reset_data();
+                                        });
+                                    }),
+                                });
                         },
                         "Add"
                     }
@@ -135,14 +175,48 @@ pub async fn get_ignore_events(env: String) -> Result<Vec<IgnoreEventApiModel>, 
     Ok(result)
 }
 
-/*
+#[server]
+pub async fn add_ignore_event(
+    env: String,
+    event: IgnoreEventApiModel,
+) -> Result<(), ServerFnError> {
+    use crate::my_logger_grpc::*;
 
-         button {
-                                class: "btn btn-sm btn-primary",
-                                style: "padding:2px 6px",
-                                onclick: move |_| {
-                                    dialog_state.set(DialogState::AddIgnoreEvent);
-                                },
-                                "Add"
-                            }
-*/
+    let level: LogLevelGrpcModel = (&event.level).into();
+
+    crate::APP_CTX
+        .get_client(env.as_str())
+        .await
+        .set_ignore_event(IgnoreEventGrpcModel {
+            level: level as i32,
+            application: event.application,
+            marker: event.marker,
+        })
+        .await
+        .unwrap();
+
+    Ok(())
+}
+
+#[server]
+pub async fn delete_ignore_event(
+    env: String,
+    event: IgnoreEventApiModel,
+) -> Result<(), ServerFnError> {
+    use crate::my_logger_grpc::*;
+
+    let level: LogLevelGrpcModel = (&event.level).into();
+
+    crate::APP_CTX
+        .get_client(env.as_str())
+        .await
+        .delete_ignore_event(DeleteIgnoreEventGrpcRequest {
+            level: level as i32,
+            application: event.application,
+            marker: event.marker,
+        })
+        .await
+        .unwrap();
+
+    Ok(())
+}

@@ -46,6 +46,7 @@ pub fn edit_one_time_ignore_event(
 
     rsx! {
         DialogTemplate {
+            header: "Edit one time ignore event",
             dialog_state: dialog_state.clone(),
             modal_body: rsx! {
                 table {

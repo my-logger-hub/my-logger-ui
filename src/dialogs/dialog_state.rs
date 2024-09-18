@@ -9,10 +9,12 @@ use super::TimeRange;
 #[derive(Clone)]
 pub enum DialogState {
     None,
-    AddIgnoreEvent(Rc<String>),
-    DeleteConfirmation {
-        env: Rc<String>,
-        itm: Rc<IgnoreEventApiModel>,
+    AddIgnoreEvent {
+        on_ok: EventHandler<IgnoreEventApiModel>,
+    },
+    Confirmation {
+        text: Rc<String>,
+        on_ok: EventHandler<()>,
     },
     EditTimeRange {
         value: TimeRange,
