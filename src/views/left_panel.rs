@@ -8,7 +8,6 @@ pub fn LeftPanel() -> Element {
     let mut dashboard_active = "";
     let mut logs_active = "";
     let mut settings_active = "";
-    let mut ignore_single_events_active = "";
 
     let location_state_value = {
         let location_state = consume_context::<Signal<LocationState>>();
@@ -27,10 +26,6 @@ pub fn LeftPanel() -> Element {
         LocationState::Settings => {
             settings_active = CLASS_NAME;
         }
-
-        LocationState::IgnoreSingleEvents => {
-            ignore_single_events_active = CLASS_NAME;
-        }
     }
 
     rsx! {
@@ -46,12 +41,6 @@ pub fn LeftPanel() -> Element {
         Link { class: "menu-item {logs_active}", to: "/logs", "Logs" }
 
         Link { class: "menu-item {settings_active}", to: "/settings", "Settings" }
-
-        Link {
-            class: "menu-item {ignore_single_events_active}",
-            to: "/ignore_single_events",
-            "Ignore Single Events"
-        }
     }
 }
 

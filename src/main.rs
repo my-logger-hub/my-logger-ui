@@ -54,9 +54,6 @@ enum Route {
 
     #[route("/settings")]
     Settings {},
-
-    #[route("/ignore_single_events")]
-    IgnoreSingleEvents {},
 }
 
 fn main() {
@@ -131,12 +128,6 @@ fn Settings() -> Element {
 }
 
 #[component]
-fn IgnoreSingleEvents() -> Element {
-    use_context_provider(|| Signal::new(LocationState::IgnoreSingleEvents));
-    App()
-}
-
-#[component]
 fn App() -> Element {
     use_context_provider(|| Signal::new(MainState::new()));
     use_context_provider(|| Signal::new(DialogState::None));
@@ -199,10 +190,6 @@ fn ActiveApp() -> Element {
         },
         LocationState::Settings => rsx! {
             RenderSettings {}
-        },
-
-        LocationState::IgnoreSingleEvents => rsx! {
-            div {}
         },
     };
 
