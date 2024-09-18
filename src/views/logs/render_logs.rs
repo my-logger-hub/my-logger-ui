@@ -41,6 +41,8 @@ pub fn RenderLogs() -> Element {
         }
     });
 
+    let mut log_level = use_signal(|| crate::storage_settings::log_level::get());
+
     let mut time_range_state = use_signal(|| crate::storage_settings::time_range::get());
 
     let time_range_value = Rc::new(time_range_state.read().clone());
@@ -81,7 +83,13 @@ pub fn RenderLogs() -> Element {
             tr {
                 td { style: "width: 150px;",
                     div { style: "margin-top: 5px;", "Level" }
-                    SelectLogLevel {}
+                    SelectLogLevel {
+                        value: log_level.read().clone(),
+                        on_change: move |level| {
+                            log_level.set(level);
+                            crate::storage_settings::log_level::set(level);
+                        }
+                    }
                 }
                 td { style: "width: 260px;",
 

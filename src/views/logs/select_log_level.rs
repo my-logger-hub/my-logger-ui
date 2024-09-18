@@ -3,19 +3,15 @@ use dioxus::prelude::*;
 use crate::storage_settings::log_level::SelectedLevel;
 
 #[component]
-pub fn SelectLogLevel() -> Element {
-    let mut log_level_filter = use_signal(|| crate::storage_settings::log_level::get());
-
-    let active = log_level_filter.read().clone();
-
-    let items = SelectedLevel::LEVELS.map(|(key, value)| {
-        if key == active.as_str() {
+pub fn SelectLogLevel(value: SelectedLevel, on_change: EventHandler<SelectedLevel>) -> Element {
+    let items = SelectedLevel::LEVELS.map(|(s_key, s_value)| {
+        if s_key == value.as_str() {
             rsx! {
-                option { selected: true, value: key, {value} }
+                option { selected: true, value: s_key, {s_value} }
             }
         } else {
             rsx! {
-                option { value: key, {value} }
+                option { value: s_key, {s_value} }
             }
         }
     });
@@ -24,10 +20,9 @@ pub fn SelectLogLevel() -> Element {
             class: "form-select form-select-sm",
             oninput: move |e| {
                 let level = SelectedLevel::from_str(e.value().as_str());
-                crate::storage_settings::log_level::set(level);
-                log_level_filter.set(level);
+                on_change.call(level);
             },
-            value: log_level_filter.read().as_str(),
+            value: value.as_str(),
             {items.into_iter()}
         }
     }
