@@ -165,11 +165,13 @@ impl EditOneTimeIgnoreEventState {
             message_match: src.message_match.clone(),
             skip_amount: src.skip_amount as i64,
             minutes_to_wait: src.minutes_to_wait as i64,
-            ctx: src
-                .ctx_match
-                .iter()
-                .map(|(key, value)| (key.clone(), value.clone()))
-                .collect(),
+            ctx: if let Some(ctx) = src.ctx_match.as_ref() {
+                ctx.iter()
+                    .map(|(key, value)| (key.clone(), value.clone()))
+                    .collect()
+            } else {
+                Vec::new()
+            },
         }
     }
 
@@ -185,11 +187,16 @@ impl EditOneTimeIgnoreEventState {
             message_match: self.message_match.clone(),
             skip_amount: self.skip_amount as u64,
             minutes_to_wait: self.minutes_to_wait as u64,
-            ctx_match: self
-                .ctx
-                .iter()
-                .map(|(k, v)| (k.clone(), v.clone()))
-                .collect(),
+            ctx_match: if self.ctx.len() > 0 {
+                Some(
+                    self.ctx
+                        .iter()
+                        .map(|(k, v)| (k.clone(), v.clone()))
+                        .collect(),
+                )
+            } else {
+                None
+            },
         }
     }
 

@@ -47,13 +47,28 @@ pub fn RenderOneTimeIgnoreList() -> Element {
             }
         });
 
-        let ctx_matches = itm.ctx_match.iter().map(|(key, value)| {
-            rsx! {
-                div { "{key.as_str()}:{value.as_str()}" }
+        
+        
+        let ctx_matches = if let Some(ctx) = itm.ctx_match.as_ref(){
+            let items = ctx.iter().map(|(key, value)| {
+                rsx! {
+                    div { "{key.as_str()}:{value.as_str()}" }
+                }
+            });
+
+            rsx!{
+                {items}
             }
-        });
+        }else{
+            rsx! {
+                div {}
+            }
+        };
+        
 
         let env = env.clone();
+        let env_to_delete = env.clone();
+        let id_to_delete = Rc::new(itm.id.clone());
         rsx! {
             tr {
                 td { {levels} }
@@ -65,27 +80,57 @@ pub fn RenderOneTimeIgnoreList() -> Element {
                 td { {itm.minutes_to_wait.to_string()} }
                 td {
 
-                    button {
-                        class: "btn btn-primary btn-sm",
-                        style: "padding:2px 6px",
-                        onclick: move |_| {
-                            let env = env.clone();
-                            let itm = itm.clone();
-                            dialog_state
-                                .set(DialogState::EditOneTimeIgnoreEvent {
-                                    itm: itm,
-                                    on_ok: EventHandler::new(move |item_to_save| {
-                                        let env = env.clone();
-                                        spawn(async move {
-                                            set_one_time_ignore_event(env.to_string(), item_to_save)
-                                                .await
-                                                .unwrap();
-                                            main_state.write().one_time_ignore_events = DataState::None;
-                                        });
-                                    }),
-                                });
-                        },
-                        "Edit"
+                    div { class: "btn-group",
+                        button {
+                            class: "btn btn-primary btn-sm",
+                            style: "padding:2px 6px",
+                            onclick: move |_| {
+                                let env = env.clone();
+                                let itm = itm.clone();
+                                dialog_state
+                                    .set(DialogState::EditOneTimeIgnoreEvent {
+                                        itm: itm,
+                                        on_ok: EventHandler::new(move |item_to_save| {
+                                            let env = env.clone();
+                                            spawn(async move {
+                                                set_one_time_ignore_event(env.to_string(), item_to_save)
+                                                    .await
+                                                    .unwrap();
+                                                main_state.write().one_time_ignore_events = DataState::None;
+                                            });
+                                        }),
+                                    });
+                            },
+                            "Edit"
+                        }
+                        button {
+                            class: "btn btn-primary btn-sm",
+                            style: "padding:2px 6px",
+                            onclick: move |_| {
+                                let env_to_delete = env_to_delete.clone();
+                                let id_to_delete = id_to_delete.clone();
+                                dialog_state
+                                    .set(DialogState::Confirmation {
+                                        text: "Please confirm that you want to delete this item"
+                                            .to_string()
+                                            .into(),
+                                        on_ok: EventHandler::new(move |_| {
+                                            let env_to_delete = env_to_delete.clone();
+                                            let id_to_delete = id_to_delete.clone();
+                                            spawn(async move {
+                                                delete_one_time_ignore_event(
+                                                        env_to_delete.to_string(),
+                                                        id_to_delete.to_string(),
+                                                    )
+                                                    .await
+                                                    .unwrap();
+                                                main_state.write().one_time_ignore_events = DataState::None;
+                                            });
+                                        }),
+                                    });
+                            },
+                            "Delete"
+                        }
                     }
                 }
             }
@@ -139,14 +184,27 @@ fn load_from_db(env: Rc<String>) {
     });
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct OneTimeIgnoreHttpModel {
     pub id: String,
     pub levels: Vec<LogApiLevel>,
     pub message_match: String,
-    pub ctx_match: HashMap<String, String>,
+    pub ctx_match: Option<HashMap<String, String>>,
     pub skip_amount: u64,
     pub minutes_to_wait: u64,
+}
+
+impl Default for OneTimeIgnoreHttpModel {
+    fn default() -> Self {
+        Self {
+            id: uuid::Uuid::new_v4().to_string(),
+            levels: vec![],
+            message_match: "".to_string(),
+            ctx_match: None,
+            skip_amount: 0,
+            minutes_to_wait: 0,
+        }
+    }
 }
 
 #[server]
@@ -166,11 +224,15 @@ pub async fn get_one_time_ignore_events(
             .map(|itm| {
                 let levels = itm.levels().map(|itm| itm.into()).collect();
 
-                let ctx_match = itm
+                let ctx_match = if itm.context_match.len()>0{
+                    Some(itm
                     .context_match
                     .iter()
                     .map(|itm| (itm.key.to_string(), itm.value.to_string()))
-                    .collect();
+                    .collect())
+                }  else{
+                    None
+                };
 
                 OneTimeIgnoreHttpModel {
                     id: itm.id,
@@ -209,17 +271,33 @@ async fn set_one_time_ignore_event(
                 })
                 .collect(),
             message_match: itm.message_match,
-            context_match: itm
-                .ctx_match
+            context_match: if let Some(ctx_match) = itm.ctx_match.as_ref(){
+                ctx_match
                 .iter()
                 .map(|(k, v)| LogEventContext {
                     key: k.to_string(),
                     value: v.to_string(),
                 })
-                .collect(),
+                .collect()
+            }else{
+                vec![]
+            },
             skip_amount: itm.skip_amount,
             minutes_to_wait: itm.minutes_to_wait,
         })
+        .await
+        .unwrap();
+
+    Ok(())
+}
+
+#[server]
+async fn delete_one_time_ignore_event(env: String, id: String) -> Result<(), ServerFnError> {
+    use my_logger_grpc::*;
+    crate::APP_CTX
+        .get_client(env.as_str())
+        .await
+        .delete_ignore_single_event(DeleteIgnoreSingleEventGrpcRequest { id })
         .await
         .unwrap();
 
