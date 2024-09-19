@@ -183,6 +183,10 @@ impl TimeRange {
     pub fn default() -> Self {
         TimeRange::HoursAgo(0)
     }
+
+    pub fn as_ref(&self) -> &Self {
+        self
+    }
     pub fn to_string(&self) -> String {
         match self {
             TimeRange::HoursAgo(v) => v.to_string(),

@@ -124,8 +124,10 @@ pub fn EditOneTimeIgnoreDialog(
                 button {
                     class: "btn btn-primary",
                     onclick: move |_| {
-                        let model = state.read().to_http_model();
-                        dialog_state.set(DialogState::None);
+                        let model = {
+                            dialog_state.set(DialogState::None);
+                            state.read().to_http_model()
+                        };
                         on_ok.call(model);
                     },
                     disabled: btn_disabled,

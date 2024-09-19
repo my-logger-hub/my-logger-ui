@@ -10,7 +10,7 @@ use super::DataState;
 pub struct MainState {
     pub storage: WebLocalStorage,
     pub envs: Option<Vec<Rc<String>>>,
-    pub logs_data: Option<Rc<Vec<LogApiItem>>>,
+    pub logs_data: DataState<Vec<Rc<LogApiItem>>>,
     pub dashboard_data: DataState<DashboardItem>,
     pub ignore_events: DataState<Vec<Rc<IgnoreEventApiModel>>>,
     pub one_time_ignore_events: DataState<Vec<Rc<OneTimeIgnoreHttpModel>>>,
@@ -23,7 +23,7 @@ impl MainState {
 
         Self {
             envs: None,
-            logs_data: None,
+            logs_data: DataState::None,
             dashboard_data: DataState::None,
             ignore_events: DataState::None,
             one_time_ignore_events: DataState::None,
@@ -60,19 +60,8 @@ impl MainState {
         self.envs.as_ref().unwrap().first().unwrap().clone()
     }
 
-    pub fn set_logs_data(&mut self, value: Option<Vec<LogApiItem>>) {
-        match value {
-            Some(value) => {
-                self.logs_data = Some(Rc::new(value));
-            }
-            None => {
-                self.logs_data = None;
-            }
-        }
-    }
-
     pub fn reset_data(&mut self) {
-        self.logs_data = None;
+        self.logs_data = DataState::None;
         self.dashboard_data = DataState::None;
         self.ignore_events = DataState::None;
         self.one_time_ignore_events = DataState::None;

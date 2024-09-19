@@ -93,10 +93,10 @@ pub fn RenderOneTimeIgnoreList() -> Element {
                                         on_ok: EventHandler::new(move |item_to_save| {
                                             let env = env.clone();
                                             spawn(async move {
-                                                set_one_time_ignore_event(env.to_string(), item_to_save)
+                                                save_one_time_ignore_event(env.to_string(), item_to_save)
                                                     .await
                                                     .unwrap();
-                                                main_state.write().one_time_ignore_events = DataState::None;
+                                                main_state.write().reset_data();
                                             });
                                         }),
                                     });
@@ -124,7 +124,7 @@ pub fn RenderOneTimeIgnoreList() -> Element {
                                                     )
                                                     .await
                                                     .unwrap();
-                                                main_state.write().one_time_ignore_events = DataState::None;
+                                                main_state.write().reset_data();
                                             });
                                         }),
                                     });
@@ -157,10 +157,10 @@ pub fn RenderOneTimeIgnoreList() -> Element {
                                     on_ok: EventHandler::new(move |item_to_save| {
                                         let env = env.clone();
                                         spawn(async move {
-                                            set_one_time_ignore_event(env.to_string(), item_to_save)
+                                            save_one_time_ignore_event(env.to_string(), item_to_save)
                                                 .await
                                                 .unwrap();
-                                            main_state.write().one_time_ignore_events = DataState::None;
+                                            consume_context::<Signal<MainState>>().write().reset_data();
                                         });
                                     }),
                                 });
@@ -251,11 +251,12 @@ pub async fn get_one_time_ignore_events(
 }
 
 #[server]
-async fn set_one_time_ignore_event(
+async fn save_one_time_ignore_event(
     env: String,
     itm: OneTimeIgnoreHttpModel,
 ) -> Result<(), ServerFnError> {
     use my_logger_grpc::*;
+
     crate::APP_CTX
         .get_client(env.as_str())
         .await
@@ -287,6 +288,7 @@ async fn set_one_time_ignore_event(
         })
         .await
         .unwrap();
+
 
     Ok(())
 }

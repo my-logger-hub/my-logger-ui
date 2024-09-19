@@ -1,0 +1,214 @@
+use dioxus::prelude::*;
+
+use crate::{
+    dialogs::{DialogState, TimeRange},
+    models::LogPathDataModel,
+    storage_settings::log_level::SelectedLevel,
+    views::logs::SelectLogLevel,
+    DataState, MainState, Route,
+};
+
+#[component]
+pub fn RenderLogsPanel(
+    // ctx_filter: Signal<String>,
+    // log_level: Signal<SelectedLevel>,
+    // time_range_state: Signal<TimeRange>,
+    // search_type: Signal<SearchType>,
+    time_zone: i64,
+    on_refresh_click: EventHandler<SearchPanelState>,
+) -> Element {
+    let mut search_panel_state = consume_context::<Signal<SearchPanelState>>();
+    let search_panel_state_read_access = search_panel_state.read();
+
+    //let ctx_filter_value = Rc::new(ctx_filter.read().clone());
+
+    //let ctx_filter_panel_value = ctx_filter_value.clone();
+
+    //let time_range_value = Rc::new(time_range_state.read().clone());
+
+    let range_label = match search_panel_state_read_access.time_range.as_ref() {
+        TimeRange::HoursAgo(_) => "From Hours ago:",
+        TimeRange::Range(_, _) => "From Time range:",
+        TimeRange::ExactHour(_) => "Get log from Hour:",
+    };
+
+    let search_placeholder = match search_panel_state_read_access.search_type {
+        SearchType::Ctx => "Example: Application='MyApp' ; Version='Version'",
+        SearchType::Text => "Just a text",
+    };
+
+    let level = search_panel_state_read_access.log_level.clone();
+
+    let time_range_value = search_panel_state_read_access.time_range.to_string();
+
+    let second_path = LogPathDataModel {
+        is_ctx_search: search_panel_state_read_access.search_type.is_ctx_search(),
+        search_string: search_panel_state_read_access.filter.clone(),
+        level: crate::storage_settings::log_level::get().into(),
+        time_range: time_range_value.to_string(),
+    }
+    .to_base_64();
+
+    rsx! {
+
+        table { style: "width: calc(var(--app-width) - var(--panel-width)); border-bottom: 1px lightgray solid; box-shadow: 0 0 5px lightgray; position: fixed; background:white",
+            tr {
+                td { style: "width: 150px;",
+                    div { style: "margin-top: 5px;", "Level" }
+                    SelectLogLevel {
+                        value: level.clone(),
+                        on_change: move |level: SelectedLevel| {
+                            search_panel_state.write().log_level = level.clone();
+                            crate::storage_settings::log_level::set(level);
+                        }
+                    }
+                }
+                td { style: "width: 260px;",
+
+                    div { style: "margin-top: 5px;", {range_label} }
+                    input {
+                        style: "width: 100%; cursor: pointer;",
+                        class: "form-control form-control-sm",
+                        readonly: true,
+                        value: time_range_value.to_string(),
+                        onclick: move |_| {
+                            let value = { search_panel_state.read().time_range.clone() };
+                            consume_context::<Signal<DialogState>>()
+                                .set(DialogState::EditTimeRange {
+                                    value,
+                                    time_zone,
+                                    on_change: EventHandler::new(move |time_range: TimeRange| {
+                                        crate::storage_settings::time_range::set(&time_range);
+                                        search_panel_state.write().time_range = time_range;
+                                    }),
+                                });
+                        }
+                    }
+                }
+
+                td { style: "width:60%;padding-left: 0px;",
+                    div {
+                        select {
+                            style: "width: 100px; border: 1px solid white;",
+                            class: "form-select form-select-sm",
+                            oninput: move |e| {
+                                let value = match e.value().as_str() {
+                                    "ctx" => SearchType::Ctx,
+                                    "text" => SearchType::Text,
+                                    _ => SearchType::Ctx,
+                                };
+                                crate::storage_settings::ctx_search::set(value.is_ctx_search());
+                                search_panel_state.write().search_type = value;
+                            },
+                            option { value: "ctx", "Ctx Search" }
+                            option { value: "text", "Text Search" }
+                        }
+                    }
+                    input {
+                        class: "form-control form-control-sm",
+                        placeholder: search_placeholder,
+                        value: "{search_panel_state_read_access.filter.as_str()}",
+                        oninput: move |e| {
+                            search_panel_state.write().filter = e.value();
+                        }
+                    }
+                }
+                td { style: "width: 32px;vertical-align: bottom;",
+                    Link {
+                        class: "btn btn-primary btn-sm",
+                        to: Route::Logs {
+                            data: vec![second_path],
+                        },
+                        onclick: move |_| {
+                            let search_panel = {
+                                let mut main_state = consume_context::<Signal<MainState>>();
+                                main_state.write().logs_data = DataState::None;
+                                search_panel_state.read().clone()
+                            };
+                            on_refresh_click.call(search_panel);
+                        },
+                        img {
+                            src: "/img/ico-refresh.svg",
+                            style: "width: 16px;"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SearchPanelState {
+    pub log_level: SelectedLevel,
+    pub filter: String,
+    pub time_range: TimeRange,
+    pub search_type: SearchType,
+}
+
+impl SearchPanelState {
+    pub fn new() -> Self {
+        let search_type = if crate::storage_settings::ctx_search::get() {
+            SearchType::Ctx
+        } else {
+            SearchType::Text
+        };
+        Self {
+            search_type,
+            log_level: crate::storage_settings::log_level::get(),
+            filter: crate::storage_settings::search_line::get(),
+            time_range: crate::storage_settings::time_range::get(),
+        }
+    }
+
+    pub fn append_filter_conditions(&mut self, key: &str, value: &str) {
+        if !self.filter.is_empty() {
+            self.filter.push_str(" and ");
+        }
+        self.filter.push_str(key);
+        self.filter.push_str(":'");
+        self.filter.push_str(value);
+        self.filter.push_str("'");
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SearchType {
+    Ctx,
+    Text,
+}
+
+impl SearchType {
+    pub fn is_ctx_search(&self) -> bool {
+        match self {
+            SearchType::Ctx => true,
+            SearchType::Text => false,
+        }
+    }
+}
+
+/*
+   match search_type.read().clone() {
+                                SearchType::Ctx => {
+                                    load(
+                                        env_on_click.clone(),
+                                        &time_range_value_copy,
+                                        time_zone,
+                                        main_state,
+                                        crate::log_event_context_parser::parse_key_value_from_string(
+                                            ctx_filter_panel_value.as_str(),
+                                        ),
+                                    );
+                                }
+                                SearchType::Text => {
+                                    search_as_text(
+                                        main_state,
+                                        env_on_click.clone(),
+                                        &time_range_value_copy,
+                                        time_zone,
+                                        ctx_filter_panel_value.to_string(),
+                                    );
+                                }
+                            }
+
+*/
