@@ -44,7 +44,10 @@ pub fn EditTimeRangeDialog(
                     class: "form-control",
                     value: v.to_string(),
                     oninput: move |e| {
-                        let value = e.value().parse::<i32>().unwrap_or(0);
+                        let mut value = e.value().parse::<i32>().unwrap_or(0);
+                        if value < 0 {
+                            value = -value;
+                        }
                         time_range_state.set(TimeRange::HoursAgo(value));
                         temp_values.write().hours_ago = value;
                     }
@@ -204,7 +207,7 @@ impl TimeRange {
 
     pub fn get_date_from_date_to(&self, time_zone: i64) -> (i64, i64) {
         match self {
-            Self::HoursAgo(value) => (*value as i64, 0),
+            Self::HoursAgo(value) => (-(*value as i64), 0),
             Self::Range(from, to) => {
                 let mut from = DateTimeAsMicroseconds::from_str(from).unwrap();
                 from.add_minutes(time_zone);
