@@ -20,7 +20,6 @@ jobs:
           ver=${GITHUB_REF_NAME}
           echo $ver
           sed -i -e 's/^version = .*/version = "'$ver'"/' Cargo.toml
-          python3 --version
           
 
       - name: Build the app        
