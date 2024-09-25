@@ -8,13 +8,6 @@ pub enum SelectedTimeZone {
 }
 
 impl SelectedTimeZone {
-    pub fn as_str(&self) -> &str {
-        match self {
-            SelectedTimeZone::UtcZero => UTC_0_VALUE,
-            SelectedTimeZone::LocalTime => LOCAL_VALUE,
-        }
-    }
-
     pub fn from_str(src: &str) -> Self {
         match src {
             UTC_0_VALUE => Self::UtcZero,

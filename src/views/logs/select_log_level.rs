@@ -18,11 +18,11 @@ pub fn SelectLogLevel(value: SelectedLevel, on_change: EventHandler<SelectedLeve
 
     let stl = match value {
         SelectedLevel::All => "",
-        SelectedLevel::FatalError => "background: black; color:white;",
-        SelectedLevel::Error => "background: red; color:white;",
-        SelectedLevel::Warning => "background: orange;",
-        SelectedLevel::Info => "color: darkgreen;",
-        SelectedLevel::Debug => "background: lightgray;color: black;",
+        SelectedLevel::FatalError => "background: black; color:white;    font-weight: bold;",
+        SelectedLevel::Error => "background: red; color:white;    font-weight: bold;",
+        SelectedLevel::Warning => "background: orange;    font-weight: bold;",
+        SelectedLevel::Info => "background: darkgreen;font-weight: bold;color:white;",
+        SelectedLevel::Debug => "background: lightgray;color: black;    font-weight: bold;",
     };
 
     rsx! {
