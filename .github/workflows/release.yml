@@ -20,6 +20,7 @@ jobs:
           ver=${GITHUB_REF_NAME}
           echo $ver
           sed -i -e 's/^version = .*/version = "'$ver'"/' Cargo.toml
+          python3 --version
           
 
       - name: Build the app        
@@ -27,7 +28,7 @@ jobs:
           export GIT_HUB_TOKEN=${{ secrets.PUBLISH_TOKEN }}
           dx build --platform fullstack --release
           ls ./dist
-          python build.py ./dist/index.html
+          python3 build.py ./dist/index.html
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v3
