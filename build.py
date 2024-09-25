@@ -21,7 +21,7 @@ def replace_wasm_with_random_string(file_path):
 
     updated_content = updated_content.replace('.css', f'.css?id={generate_random_string()}')
 
-    print(file_path)
+    print(updated_content)
 
     # Write the updated content back to the file
     with open(file_path, 'w') as file:
