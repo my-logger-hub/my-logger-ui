@@ -2,7 +2,10 @@ use std::rc::Rc;
 
 use dioxus_utils::js::WebLocalStorage;
 
-use crate::{DashboardItem, IgnoreEventApiModel, LogApiItem, OneTimeIgnoreHttpModel};
+use crate::{
+    storage_settings::selected_time_zone::SelectedTimeZone, DashboardItem, IgnoreEventApiModel,
+    LogApiItem, OneTimeIgnoreHttpModel, TimeZone,
+};
 
 pub const ENV_LOCAL_STORAGE_KEY: &str = "env";
 use super::DataState;
@@ -14,13 +17,15 @@ pub struct MainState {
     pub dashboard_data: DataState<DashboardItem>,
     pub ignore_events: DataState<Vec<Rc<IgnoreEventApiModel>>>,
     pub one_time_ignore_events: DataState<Vec<Rc<OneTimeIgnoreHttpModel>>>,
-    pub time_zone: i64,
+    pub selected_time_zone: SelectedTimeZone,
+    time_zone: TimeZone,
 }
 
 impl MainState {
     pub fn new() -> Self {
         let storage = dioxus_utils::js::GlobalAppSettings::get_local_storage();
 
+        let selected_time_zone = crate::storage_settings::selected_time_zone::get();
         Self {
             envs: None,
             logs_data: DataState::None,
@@ -28,7 +33,8 @@ impl MainState {
             ignore_events: DataState::None,
             one_time_ignore_events: DataState::None,
             storage,
-            time_zone: 0,
+            time_zone: TimeZone::default(),
+            selected_time_zone,
         }
     }
 
@@ -36,11 +42,22 @@ impl MainState {
         self.envs.is_some()
     }
 
-    pub fn set_environments(&mut self, envs: Vec<String>, time_zone: i64) {
+    pub fn set_environments(&mut self, envs: Vec<String>, time_zone: TimeZone) {
         let envs: Vec<Rc<String>> = envs.into_iter().map(Rc::new).collect();
 
         self.envs = Some(envs);
         self.time_zone = time_zone;
+    }
+
+    pub fn get_selected_timezone(&self) -> TimeZone {
+        match self.selected_time_zone {
+            SelectedTimeZone::UtcZero => TimeZone::create_utc_zero(),
+            SelectedTimeZone::LocalTime => self.time_zone,
+        }
+    }
+
+    pub fn get_local_timezone(&self) -> TimeZone {
+        self.time_zone
     }
 
     pub fn active_env_changed(&mut self, value: &str) {

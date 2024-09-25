@@ -1,4 +1,4 @@
-use crate::dialogs::DialogTemplate;
+use crate::{dialogs::DialogTemplate, TimeZone};
 
 use super::DialogState;
 use crate::date_key::DateHourKey;
@@ -9,14 +9,14 @@ use rust_extensions::date_time::DateTimeAsMicroseconds;
 pub fn EditTimeRangeDialog(
     value: TimeRange,
     on_change: EventHandler<TimeRange>,
-    time_zone: i64,
+    time_zone: TimeZone,
 ) -> Element {
     let mut dialog_state = consume_context::<Signal<DialogState>>();
     let mut time_range_state = use_signal(|| value);
 
     let mut temp_values = use_signal(|| {
-        let mut now = dioxus_utils::js::now_date_time();
-        now.add_minutes(-time_zone);
+        let now = dioxus_utils::js::now_date_time();
+        let now = time_zone.to_time_zone_date_time(now);
         let mut before = now.clone();
         before.add_hours(-1);
 
@@ -205,21 +205,21 @@ impl TimeRange {
         }
     }
 
-    pub fn get_date_from_date_to(&self, time_zone: i64) -> (i64, i64) {
+    pub fn get_date_from_date_to(&self, time_zone: TimeZone) -> (i64, i64) {
         match self {
             Self::HoursAgo(value) => (-(*value as i64), 0),
             Self::Range(from, to) => {
-                let mut from = DateTimeAsMicroseconds::from_str(from).unwrap();
-                from.add_minutes(time_zone);
-                let mut to = DateTimeAsMicroseconds::from_str(to).unwrap();
-                to.add_minutes(time_zone);
+                let from = DateTimeAsMicroseconds::from_str(from).unwrap();
+                let from = time_zone.to_time_zone_date_time(from);
+
+                let to = DateTimeAsMicroseconds::from_str(to).unwrap();
+                let to = time_zone.to_time_zone_date_time(to);
 
                 (from.unix_microseconds, to.unix_microseconds)
             }
             Self::ExactHour(value) => {
-                let mut dt: DateTimeAsMicroseconds = value.into();
-
-                dt.add_minutes(time_zone);
+                let dt: DateTimeAsMicroseconds = value.into();
+                let dt = time_zone.to_time_zone_date_time(dt);
 
                 let result: DateHourKey = dt.into();
                 (result.get_value(), 0)

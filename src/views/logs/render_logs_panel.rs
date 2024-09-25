@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use dioxus::prelude::*;
 
 use crate::{
@@ -5,7 +7,7 @@ use crate::{
     models::LogPathDataModel,
     storage_settings::log_level::SelectedLevel,
     views::logs::SelectLogLevel,
-    DataState, MainState, Route,
+    DataState, MainState, Route, TimeZone,
 };
 
 #[component]
@@ -14,9 +16,20 @@ pub fn RenderLogsPanel(
     // log_level: Signal<SelectedLevel>,
     // time_range_state: Signal<TimeRange>,
     // search_type: Signal<SearchType>,
-    time_zone: i64,
+    env: Rc<String>,
+    time_zone: TimeZone,
     on_refresh_click: EventHandler<SearchPanelState>,
 ) -> Element {
+    let mut insight_keys: Signal<DataState<Vec<String>>> = use_signal(|| DataState::None);
+
+    if insight_keys.read().is_none() {
+        insight_keys.set(DataState::Loading);
+        spawn(async move {
+            let keys = get_insight_keys(env.to_string()).await.unwrap();
+            insight_keys.set(DataState::Loaded(keys));
+        });
+    }
+
     let mut search_panel_state = consume_context::<Signal<SearchPanelState>>();
     let search_panel_state_read_access = search_panel_state.read();
 
@@ -112,6 +125,8 @@ pub fn RenderLogsPanel(
                             search_panel_state.write().filter = e.value();
                         }
                     }
+
+                    div { id: "insights-panel" }
                 }
                 td { style: "width: 32px;vertical-align: bottom;",
                     Link {
@@ -187,28 +202,9 @@ impl SearchType {
     }
 }
 
-/*
-   match search_type.read().clone() {
-                                SearchType::Ctx => {
-                                    load(
-                                        env_on_click.clone(),
-                                        &time_range_value_copy,
-                                        time_zone,
-                                        main_state,
-                                        crate::log_event_context_parser::parse_key_value_from_string(
-                                            ctx_filter_panel_value.as_str(),
-                                        ),
-                                    );
-                                }
-                                SearchType::Text => {
-                                    search_as_text(
-                                        main_state,
-                                        env_on_click.clone(),
-                                        &time_range_value_copy,
-                                        time_zone,
-                                        ctx_filter_panel_value.to_string(),
-                                    );
-                                }
-                            }
-
-*/
+#[server]
+pub async fn get_insight_keys(env: String) -> Result<Vec<String>, ServerFnError> {
+    let client = crate::APP_CTX.get_client(env.as_str()).await;
+    let response = client.get_insights_keys(()).await.unwrap();
+    Ok(response.keys)
+}

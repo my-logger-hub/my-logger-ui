@@ -10,5 +10,7 @@ mod envs_selector;
 pub use envs_selector::*;
 mod logs;
 pub use logs::*;
+mod ignore_lists;
+pub use ignore_lists::*;
 mod settings;
 pub use settings::*;

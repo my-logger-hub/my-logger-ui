@@ -8,6 +8,7 @@ pub fn LeftPanel() -> Element {
     let mut dashboard_active = "";
     let mut logs_active = "";
     let mut settings_active = "";
+    let mut ignore_lists_active = "";
 
     let location_state_value = {
         let location_state = consume_context::<Signal<LocationState>>();
@@ -23,11 +24,15 @@ pub fn LeftPanel() -> Element {
             logs_active = CLASS_NAME;
         }
 
-        LocationState::SettingsIgnoreList => {
-            settings_active = CLASS_NAME;
+        LocationState::IgnoreList => {
+            ignore_lists_active = CLASS_NAME;
         }
 
-        LocationState::SettingsOneTimeIgnore => {
+        LocationState::OneTimeIgnore => {
+            ignore_lists_active = CLASS_NAME;
+        }
+
+        LocationState::Settings => {
             settings_active = CLASS_NAME;
         }
     }
@@ -35,14 +40,10 @@ pub fn LeftPanel() -> Element {
     let time_zone = {
         let main_state = consume_context::<Signal<MainState>>();
         let read_access = main_state.read();
-        read_access.time_zone
+        read_access.get_selected_timezone()
     };
 
-    let time_zone = if time_zone < 0 {
-        format!("TimeZone: UTC+{}", -time_zone as f64 / 60.0)
-    } else {
-        format!("TimeZone: UTC{}", -time_zone as f64 / 60.0)
-    };
+    let time_zone = format!("TimeZone: {}", time_zone.to_string());
 
     rsx! {
 
@@ -57,6 +58,8 @@ pub fn LeftPanel() -> Element {
         Link { class: "menu-item {dashboard_active}", to: "/", "Dashboard" }
 
         Link { class: "menu-item {logs_active}", to: "/logs", "Logs" }
+
+        Link { class: "menu-item {ignore_lists_active}", to: "/ignoreLists", "Ignore Lists" }
 
         Link { class: "menu-item {settings_active}", to: "/settings", "Settings" }
     }

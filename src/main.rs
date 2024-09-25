@@ -4,7 +4,11 @@ mod states;
 
 mod date_key;
 
+mod js_bridge;
+
 mod models;
+mod time_zone;
+pub use time_zone::*;
 
 #[cfg(feature = "server")]
 use crate::app_ctx::AppContext;
@@ -22,6 +26,7 @@ mod app_ctx;
 mod components;
 #[cfg(feature = "server")]
 mod grpc_client;
+mod insights;
 mod log_event_context_parser;
 mod storage_settings;
 
@@ -55,8 +60,11 @@ enum Route {
     #[route("/logs/:..data")]
     Logs { data: Vec<String> },
 
-    #[route("/settings/:..data")]
-    Settings { data: Vec<String> },
+    #[route("/ignoreLists/:..data")]
+    IgnoreLists { data: Vec<String> },
+
+    #[route("/settings")]
+    Settings {},
 }
 
 fn main() {
@@ -97,14 +105,20 @@ fn Logs(data: Vec<String>) -> Element {
 }
 
 #[component]
-fn Settings(data: Vec<String>) -> Element {
+fn IgnoreLists(data: Vec<String>) -> Element {
     if let Some(data) = data.get(0) {
         if data == IGNORE_SINGLE_TIME_SUB_PATH {
-            use_context_provider(|| Signal::new(LocationState::SettingsOneTimeIgnore));
+            use_context_provider(|| Signal::new(LocationState::OneTimeIgnore));
             return App();
         }
     }
-    use_context_provider(|| Signal::new(LocationState::SettingsIgnoreList));
+    use_context_provider(|| Signal::new(LocationState::IgnoreList));
+    App()
+}
+
+#[component]
+fn Settings() -> Element {
+    use_context_provider(|| Signal::new(LocationState::Settings));
     App()
 }
 
@@ -129,12 +143,11 @@ fn App() -> Element {
     match &*data {
         Some(data) => match data {
             Ok(result) => {
-                let times = dioxus_utils::js::eval("new Date().getTimezoneOffset()");
-                let time_zone = times.as_f64().unwrap() as i64;
+                let time_zone = crate::js_bridge::get_time_zone();
 
                 main_state
                     .write()
-                    .set_environments(result.clone(), time_zone);
+                    .set_environments(result.clone(), time_zone.into());
                 return rsx! {
                     ActiveApp {}
                 };
@@ -168,10 +181,14 @@ fn ActiveApp() -> Element {
         LocationState::Logs => rsx! {
             RenderLogs {}
         },
-        LocationState::SettingsIgnoreList => rsx! {
-            RenderSettings {}
+        LocationState::IgnoreList => rsx! {
+            RenderIgnoreListsRoot {}
         },
-        LocationState::SettingsOneTimeIgnore => rsx! {
+        LocationState::OneTimeIgnore => rsx! {
+            RenderIgnoreListsRoot {}
+        },
+
+        LocationState::Settings => rsx! {
             RenderSettings {}
         },
     };

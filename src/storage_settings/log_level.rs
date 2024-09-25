@@ -23,11 +23,12 @@ pub enum SelectedLevel {
 }
 
 impl SelectedLevel {
-    pub const LEVELS: [(&str, &str); 5] = [
+    pub const LEVELS: [(&str, &str); 6] = [
         (LOG_LEVEL_ALL_ID, "All"),
         (LOG_LEVEL_WARNING_ID, "Warning"),
         (LOG_LEVEL_ERROR_ID, "Error"),
         (LOG_LEVEL_FATAL_ERROR_ID, "FatalError"),
+        (LOG_LEVEL_INFO_ID, "Info"),
         (LOG_LEVEL_DEBUG_ID, "Debug"),
     ];
 

@@ -2,8 +2,9 @@
 pub enum LocationState {
     Dashboard,
     Logs,
-    SettingsIgnoreList,
-    SettingsOneTimeIgnore,
+    IgnoreList,
+    OneTimeIgnore,
+    Settings,
 }
 
 impl LocationState {

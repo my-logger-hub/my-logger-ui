@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 
 use serde::{Deserialize, Serialize};
 
-use crate::states::*;
+use crate::{states::*, TimeZone};
 
 #[component]
 pub fn RenderDashboard() -> Element {
@@ -13,7 +13,7 @@ pub fn RenderDashboard() -> Element {
     let main_state_read_access = main_state.read();
 
     let env = main_state_read_access.get_selected_env();
-    let time_zone = main_state.read().time_zone;
+    let time_zone = main_state.read().get_selected_timezone();
 
     let dashboard_data = match main_state_read_access.dashboard_data.clone() {
         DataState::None => {
@@ -43,9 +43,11 @@ pub fn RenderDashboard() -> Element {
     }
 }
 
-fn request_data(env: Rc<String>, mut main_state: Signal<MainState>, time_zone: i64) {
+fn request_data(env: Rc<String>, mut main_state: Signal<MainState>, time_zone: TimeZone) {
     spawn(async move {
-        let result = get_dashboard(env.to_string(), time_zone).await.unwrap();
+        let result = get_dashboard(env.to_string(), time_zone.into())
+            .await
+            .unwrap();
         main_state.write().dashboard_data = DataState::Loaded(result);
     });
 }

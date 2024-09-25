@@ -5,7 +5,7 @@ use dioxus::prelude::*;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 use serde::{Deserialize, Serialize};
 
-use crate::{dialogs::TimeRange, states::*, storage_settings::log_level::SelectedLevel};
+use crate::{dialogs::TimeRange, states::*, storage_settings::log_level::SelectedLevel, TimeZone};
 
 use super::*;
 
@@ -26,7 +26,7 @@ pub fn RenderLogs() -> Element {
         let main_state = main_state.read();
         (
             main_state.logs_data.clone(),
-            main_state.time_zone,
+            main_state.get_selected_timezone(),
             main_state.get_selected_env(),
         )
     };
@@ -34,6 +34,7 @@ pub fn RenderLogs() -> Element {
     let env_on_refresh = env.clone();
     let top_panel = rsx! {
         RenderLogsPanel {
+            env: env.clone(),
             time_zone,
             on_refresh_click: EventHandler::new(move |v| { load_log_items(env_on_refresh.clone(), v, time_zone) })
         }
@@ -60,8 +61,8 @@ pub fn RenderLogs() -> Element {
     let items = items.iter().map(|itm| {
         let itm = itm.clone();
 
-        let mut dt = DateTimeAsMicroseconds::new(itm.timestamp);
-        dt.add_minutes(-time_zone);
+        let dt = DateTimeAsMicroseconds::new(itm.timestamp);
+        let dt = time_zone.to_time_zone_date_time(dt);
 
         let key_values: Vec<_> = itm
             .ctx
@@ -126,7 +127,7 @@ fn loading_panel() -> Element {
     }
 }
 
-fn load_log_items(env: Rc<String>, search_panel_state: SearchPanelState, time_zone: i64) {
+fn load_log_items(env: Rc<String>, search_panel_state: SearchPanelState, time_zone: TimeZone) {
     spawn(async move {
         let main_state = consume_context::<Signal<MainState>>();
         match search_panel_state.search_type {
@@ -239,7 +240,7 @@ pub struct LogEventContextApiModel {
 fn load<'s>(
     env: Rc<String>,
     time_range: &TimeRange,
-    time_zone: i64,
+    time_zone: TimeZone,
     mut main_state: Signal<MainState>,
     context_keys: Vec<LogEventContextApiModel>,
 ) {
@@ -278,7 +279,7 @@ pub fn search_as_text(
     mut main_state: Signal<MainState>,
     env: Rc<String>,
     time_range: &TimeRange,
-    time_zone: i64,
+    time_zone: TimeZone,
     phrase: String,
 ) {
     let (from, to) = time_range.get_date_from_date_to(time_zone);

@@ -9,7 +9,7 @@ pub fn RenderTabs() -> Element {
     let mut one_time_ignore_active = "";
 
     match location {
-        LocationState::SettingsOneTimeIgnore => {
+        LocationState::OneTimeIgnore => {
             one_time_ignore_active = "active";
         }
 
@@ -23,22 +23,22 @@ pub fn RenderTabs() -> Element {
         ul { class: "nav nav-tabs",
             li { class: "nav-item",
                 Link {
-                    to: Route::Settings { data: vec![] },
+                    to: Route::IgnoreLists { data: vec![] },
                     class: "nav-link {ignore_list_active}",
                     onclick: move |_| {
-                        location_state.set(LocationState::SettingsIgnoreList);
+                        location_state.set(LocationState::IgnoreList);
                     },
                     "Ignore list"
                 }
             }
             li { class: "nav-item",
                 Link {
-                    to: Route::Settings {
+                    to: Route::IgnoreLists {
                         data: vec![IGNORE_SINGLE_TIME_SUB_PATH.to_string()],
                     },
                     class: "nav-link {one_time_ignore_active}",
                     onclick: move |_| {
-                        location_state.set(LocationState::SettingsOneTimeIgnore);
+                        location_state.set(LocationState::OneTimeIgnore);
                     },
                     "One time ignore"
                 }

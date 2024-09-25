@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use dioxus::prelude::EventHandler;
 
-use crate::{IgnoreEventApiModel, OneTimeIgnoreHttpModel};
+use crate::{IgnoreEventApiModel, OneTimeIgnoreHttpModel, TimeZone};
 
 use super::TimeRange;
 
@@ -18,7 +18,7 @@ pub enum DialogState {
     },
     EditTimeRange {
         value: TimeRange,
-        time_zone: i64,
+        time_zone: TimeZone,
         on_change: EventHandler<TimeRange>,
     },
 
