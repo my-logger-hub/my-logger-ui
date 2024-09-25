@@ -1,4 +1,4 @@
-use crate::time_zone::TimeZone;
+use crate::models::*;
 
 pub fn get_time_zone() -> TimeZone {
     let times = dioxus_utils::js::eval("new Date().getTimezoneOffset()");

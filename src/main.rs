@@ -2,13 +2,9 @@
 
 mod states;
 
-mod date_key;
-
 mod js_bridge;
 
 mod models;
-mod time_zone;
-pub use time_zone::*;
 
 #[cfg(feature = "server")]
 use crate::app_ctx::AppContext;
@@ -19,7 +15,6 @@ use crate::{
 };
 
 use dioxus::prelude::*;
-use models::LogPathDataModel;
 
 #[cfg(feature = "server")]
 mod app_ctx;
@@ -89,6 +84,7 @@ fn Home() -> Element {
 
 #[component]
 fn Logs(data: Vec<String>) -> Element {
+    use models::*;
     use_context_provider(|| Signal::new(LocationState::Logs));
 
     if let Some(data) = data.get(0) {

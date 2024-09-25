@@ -1,9 +1,10 @@
-use crate::{dialogs::DialogTemplate, TimeZone};
+use crate::dialogs::DialogTemplate;
 
 use super::DialogState;
-use crate::date_key::DateHourKey;
+
 use dioxus::prelude::*;
-use rust_extensions::date_time::DateTimeAsMicroseconds;
+
+use crate::models::*;
 
 #[component]
 pub fn EditTimeRangeDialog(
@@ -12,23 +13,10 @@ pub fn EditTimeRangeDialog(
     time_zone: TimeZone,
 ) -> Element {
     let mut dialog_state = consume_context::<Signal<DialogState>>();
-    let mut time_range_state = use_signal(|| value);
 
-    let mut temp_values = use_signal(|| {
-        let now = dioxus_utils::js::now_date_time();
-        let now = time_zone.to_time_zone_date_time(now);
-        let mut before = now.clone();
-        before.add_hours(-1);
+    let mut time_range_state = use_signal(|| TimeRangeState::from(value, time_zone));
 
-        TempValues {
-            hours_ago: 0,
-            from_date: before.to_rfc3339()[..16].to_string(),
-            to_date: now.to_rfc3339()[..16].to_string(),
-            exact_hour: now.into(),
-        }
-    });
-
-    let time_range_value = time_range_state.read().clone();
+    let time_range_value = time_range_state.read().get_current_value();
 
     let mut class_time_ago = "btn-outline-secondary";
     let mut class_range = "btn-outline-secondary";
@@ -44,12 +32,8 @@ pub fn EditTimeRangeDialog(
                     class: "form-control",
                     value: v.to_string(),
                     oninput: move |e| {
-                        let mut value = e.value().parse::<i32>().unwrap_or(0);
-                        if value < 0 {
-                            value = -value;
-                        }
-                        time_range_state.set(TimeRange::HoursAgo(value));
-                        temp_values.write().hours_ago = value;
+                        let value = e.value().parse::<i32>().unwrap_or(0);
+                        time_range_state.write().set_hours_ago(value);
                     }
                 }
             }
@@ -65,13 +49,9 @@ pub fn EditTimeRangeDialog(
                             input {
                                 r#type: "datetime-local",
                                 class: "form-control",
-                                value: from,
+                                value: from.to_local_time(time_zone).to_string(),
                                 oninput: move |e| {
-                                    let value = e.value();
-                                    {
-                                        temp_values.write().from_date = value.to_string();
-                                    }
-                                    *time_range_state.write().unwrap_as_range_mut().0 = value;
+                                    time_range_state.write().set_from_date(e.value(), time_zone);
                                 }
                             }
                         }
@@ -80,13 +60,9 @@ pub fn EditTimeRangeDialog(
                             input {
                                 r#type: "datetime-local",
                                 class: "form-control",
-                                value: to,
+                                value: to.to_local_time(time_zone).to_string(),
                                 oninput: move |e| {
-                                    let value = e.value();
-                                    {
-                                        temp_values.write().to_date = value.to_string();
-                                    }
-                                    *time_range_state.write().unwrap_as_range_mut().1 = value;
+                                    time_range_state.write().set_to_date(e.value(), time_zone);
                                 }
                             }
                         }
@@ -97,9 +73,9 @@ pub fn EditTimeRangeDialog(
         TimeRange::ExactHour(key) => {
             class_exact_hour = "btn-secondary";
 
-            let value = key.to_html_input_date_local_string();
-
-            dioxus_utils::js::console_log(value.as_str());
+            let value = key
+                .to_local_time(time_zone)
+                .to_html_input_date_local_string();
 
             rsx! {
                 input {
@@ -108,10 +84,8 @@ pub fn EditTimeRangeDialog(
                     value: value.as_str(),
                     oninput: move |e| {
                         let value = e.value();
-                        let key = DateHourKey::try_from_str(&value).unwrap();
-                        dioxus_utils::js::console_log(key.to_string().as_str());
-                        time_range_state.set(TimeRange::ExactHour(key));
-                        temp_values.write().exact_hour = key;
+                        dioxus_utils::js::console_log(format!("Log: [{}]", value.as_str()).as_str());
+                        time_range_state.write().set_exact_hour(e.value(), time_zone);
                     }
                 }
             }
@@ -127,27 +101,21 @@ pub fn EditTimeRangeDialog(
                     button {
                         class: "btn {class_time_ago}",
                         onclick: move |_| {
-                            let hour = temp_values.read().hours_ago;
-                            time_range_state.set(TimeRange::HoursAgo(hour));
+                            time_range_state.write().set_mode(SelectedRangeMode::HoursAgo);
                         },
                         "Hours ago"
                     }
                     button {
                         class: "btn {class_range}",
                         onclick: move |_| {
-                            let (before, after) = {
-                                let temp_values = temp_values.read();
-                                (temp_values.from_date.to_string(), temp_values.to_date.to_string())
-                            };
-                            time_range_state.set(TimeRange::Range(before, after));
+                            time_range_state.write().set_mode(SelectedRangeMode::Range);
                         },
                         "Date range"
                     }
                     button {
                         class: "btn {class_exact_hour}",
                         onclick: move |_| {
-                            let value = temp_values.read().exact_hour;
-                            time_range_state.set(TimeRange::ExactHour(value));
+                            time_range_state.write().set_mode(SelectedRangeMode::ExactHour);
                         },
                         "Exact hour"
                     }
@@ -158,7 +126,7 @@ pub fn EditTimeRangeDialog(
                 button {
                     class: "btn btn-primary",
                     onclick: move |_| {
-                        on_change.call(time_range_state.read().clone());
+                        on_change.call(time_range_state.read().get_current_value());
                         dialog_state.set(DialogState::None);
                     },
                     "OK"
@@ -168,91 +136,99 @@ pub fn EditTimeRangeDialog(
     }
 }
 
-pub struct TempValues {
+#[derive(Debug, Clone)]
+enum SelectedRangeMode {
+    HoursAgo,
+    ExactHour,
+    Range,
+}
+
+#[derive(Debug, Clone)]
+struct TimeRangeState {
+    pub selected_range_mode: SelectedRangeMode,
     pub hours_ago: i32,
-    pub from_date: String,
-    pub to_date: String,
+    pub from_date: HtmlInputDateTime,
+    pub to_date: HtmlInputDateTime,
     pub exact_hour: DateHourKey,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum TimeRange {
-    HoursAgo(i32),
-    Range(String, String),
-    ExactHour(DateHourKey),
-}
+impl TimeRangeState {
+    pub fn from(src_value: TimeRange, time_zone: TimeZone) -> Self {
+        let now = dioxus_utils::js::now_date_time();
+        let now = time_zone.to_local_time(now);
 
-impl TimeRange {
-    pub fn default() -> Self {
-        TimeRange::HoursAgo(0)
-    }
-
-    pub fn as_ref(&self) -> &Self {
-        self
-    }
-    pub fn to_string(&self) -> String {
-        match self {
-            TimeRange::HoursAgo(v) => v.to_string(),
-            TimeRange::Range(start, end) => format!("{} - {}", start, end),
-            TimeRange::ExactHour(k) => k.to_string(),
-        }
-    }
-
-    pub fn unwrap_as_range_mut(&mut self) -> (&mut String, &mut String) {
-        match self {
-            TimeRange::Range(start, end) => (start, end),
-            _ => panic!("Not a range"),
-        }
-    }
-
-    pub fn get_date_from_date_to(&self, time_zone: TimeZone) -> (i64, i64) {
-        match self {
-            Self::HoursAgo(value) => (-(*value as i64), 0),
-            Self::Range(from, to) => {
-                let from = DateTimeAsMicroseconds::from_str(from).unwrap();
-                let from = time_zone.to_time_zone_date_time(from);
-
-                let to = DateTimeAsMicroseconds::from_str(to).unwrap();
-                let to = time_zone.to_time_zone_date_time(to);
-
-                (from.unix_microseconds, to.unix_microseconds)
+        match src_value {
+            TimeRange::HoursAgo(v) => {
+                let mut before = now.clone();
+                before.add_hours(-1);
+                return Self {
+                    selected_range_mode: SelectedRangeMode::HoursAgo,
+                    hours_ago: v,
+                    from_date: before.into(),
+                    to_date: now.into(),
+                    exact_hour: now.into(),
+                };
             }
-            Self::ExactHour(value) => {
-                let dt: DateTimeAsMicroseconds = value.into();
-                let dt = time_zone.to_time_zone_date_time(dt);
-
-                let result: DateHourKey = dt.into();
-                (result.get_value(), 0)
+            TimeRange::Range(from, to) => {
+                return Self {
+                    selected_range_mode: SelectedRangeMode::Range,
+                    hours_ago: 0,
+                    from_date: from,
+                    to_date: to,
+                    exact_hour: now.into(),
+                };
+            }
+            TimeRange::ExactHour(v) => {
+                let mut before = now.clone();
+                before.add_hours(-1);
+                return Self {
+                    selected_range_mode: SelectedRangeMode::ExactHour,
+                    hours_ago: 0,
+                    from_date: before.into(),
+                    to_date: now.into(),
+                    exact_hour: v,
+                };
             }
         }
     }
 
-    pub fn from_str(value: &str) -> Self {
-        //2024-09-17T22:19 - 2024-09-17T23:19
-        if value.len() > 30 {
-            let from = value[..16].to_string();
-            let to = value[19..].to_string();
+    pub fn set_hours_ago(&mut self, value: i32) {
+        if value < 0 {
+            self.hours_ago = -value as i32;
+        } else {
+            self.hours_ago = value as i32;
+        }
+    }
 
-            let from_dt = DateTimeAsMicroseconds::from_str(from.as_str());
-            let to_dt = DateTimeAsMicroseconds::from_str(to.as_str());
+    pub fn set_from_date(&mut self, value: String, time_zone: TimeZone) {
+        if let Some(value) = HtmlInputDateTime::try_from_str(&value) {
+            self.from_date = value.to_utc_time(time_zone);
+        }
+    }
 
-            if from_dt.is_some() && to_dt.is_some() {
-                return TimeRange::Range(from, to);
+    pub fn set_to_date(&mut self, value: String, time_zone: TimeZone) {
+        if let Some(value) = HtmlInputDateTime::try_from_str(&value) {
+            self.to_date = value.to_utc_time(time_zone);
+        }
+    }
+
+    pub fn set_exact_hour(&mut self, value: String, time_zone: TimeZone) {
+        if let Some(key) = DateHourKey::try_from_str(&value) {
+            self.exact_hour = key.to_utc_time(time_zone);
+        }
+    }
+
+    pub fn set_mode(&mut self, selected_range_mode: SelectedRangeMode) {
+        self.selected_range_mode = selected_range_mode;
+    }
+
+    pub fn get_current_value(&self) -> TimeRange {
+        match self.selected_range_mode {
+            SelectedRangeMode::HoursAgo => TimeRange::HoursAgo(self.hours_ago),
+            SelectedRangeMode::Range => {
+                TimeRange::Range(self.from_date.clone(), self.to_date.clone())
             }
+            SelectedRangeMode::ExactHour => TimeRange::ExactHour(self.exact_hour),
         }
-
-        let number = value.parse::<i32>();
-
-        if let Ok(number) = number {
-            return TimeRange::HoursAgo(number);
-        }
-
-        let date_hour_key = DateHourKey::try_from_str(value);
-
-        if let Some(date_hour_key) = date_hour_key {
-            return TimeRange::ExactHour(date_hour_key);
-        }
-
-        return TimeRange::default();
     }
 }

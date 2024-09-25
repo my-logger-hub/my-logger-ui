@@ -3,19 +3,14 @@ use std::rc::Rc;
 use dioxus::prelude::*;
 
 use crate::{
-    dialogs::{DialogState, TimeRange},
-    models::LogPathDataModel,
-    storage_settings::log_level::SelectedLevel,
-    views::logs::SelectLogLevel,
-    DataState, MainState, Route, TimeZone,
+    dialogs::DialogState, models::LogPathDataModel, storage_settings::log_level::SelectedLevel,
+    views::logs::SelectLogLevel, DataState, MainState, Route,
 };
+
+use crate::models::*;
 
 #[component]
 pub fn RenderLogsPanel(
-    // ctx_filter: Signal<String>,
-    // log_level: Signal<SelectedLevel>,
-    // time_range_state: Signal<TimeRange>,
-    // search_type: Signal<SearchType>,
     env: Rc<String>,
     time_zone: TimeZone,
     on_refresh_click: EventHandler<SearchPanelState>,
@@ -33,12 +28,6 @@ pub fn RenderLogsPanel(
     let mut search_panel_state = consume_context::<Signal<SearchPanelState>>();
     let search_panel_state_read_access = search_panel_state.read();
 
-    //let ctx_filter_value = Rc::new(ctx_filter.read().clone());
-
-    //let ctx_filter_panel_value = ctx_filter_value.clone();
-
-    //let time_range_value = Rc::new(time_range_state.read().clone());
-
     let range_label = match search_panel_state_read_access.time_range.as_ref() {
         TimeRange::HoursAgo(_) => "From Hours ago:",
         TimeRange::Range(_, _) => "From Time range:",
@@ -52,7 +41,9 @@ pub fn RenderLogsPanel(
 
     let level = search_panel_state_read_access.log_level.clone();
 
-    let time_range_value = search_panel_state_read_access.time_range.to_string();
+    let time_range_value = search_panel_state_read_access
+        .time_range
+        .to_string(time_zone);
 
     let second_path = LogPathDataModel {
         is_ctx_search: search_panel_state_read_access.search_type.is_ctx_search(),

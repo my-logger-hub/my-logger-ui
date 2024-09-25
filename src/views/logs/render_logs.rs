@@ -5,7 +5,9 @@ use dioxus::prelude::*;
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 use serde::{Deserialize, Serialize};
 
-use crate::{dialogs::TimeRange, states::*, storage_settings::log_level::SelectedLevel, TimeZone};
+use crate::{states::*, storage_settings::log_level::SelectedLevel};
+
+use crate::models::*;
 
 use super::*;
 
@@ -36,14 +38,14 @@ pub fn RenderLogs() -> Element {
         RenderLogsPanel {
             env: env.clone(),
             time_zone,
-            on_refresh_click: EventHandler::new(move |v| { load_log_items(env_on_refresh.clone(), v, time_zone) })
+            on_refresh_click: EventHandler::new(move |v| { load_log_items(env_on_refresh.clone(), v) })
         }
     };
 
     let items = match logs_data {
         DataState::None => {
             main_state.write().logs_data = DataState::Loading;
-            load_log_items(env.clone(), search_panel_state.read().clone(), time_zone);
+            load_log_items(env.clone(), search_panel_state.read().clone());
             return rsx! {
                 {top_panel},
                 {loading_panel()}
@@ -62,7 +64,7 @@ pub fn RenderLogs() -> Element {
         let itm = itm.clone();
 
         let dt = DateTimeAsMicroseconds::new(itm.timestamp);
-        let dt = time_zone.to_time_zone_date_time(dt);
+        let dt = time_zone.to_local_time(dt);
 
         let key_values: Vec<_> = itm
             .ctx
@@ -127,7 +129,7 @@ fn loading_panel() -> Element {
     }
 }
 
-fn load_log_items(env: Rc<String>, search_panel_state: SearchPanelState, time_zone: TimeZone) {
+fn load_log_items(env: Rc<String>, search_panel_state: SearchPanelState) {
     spawn(async move {
         let main_state = consume_context::<Signal<MainState>>();
         match search_panel_state.search_type {
@@ -135,7 +137,6 @@ fn load_log_items(env: Rc<String>, search_panel_state: SearchPanelState, time_zo
                 load(
                     env.clone(),
                     &search_panel_state.time_range,
-                    time_zone,
                     main_state,
                     crate::log_event_context_parser::parse_key_value_from_string(
                         search_panel_state.filter.as_str(),
@@ -148,7 +149,6 @@ fn load_log_items(env: Rc<String>, search_panel_state: SearchPanelState, time_zo
                     main_state,
                     env.clone(),
                     &search_panel_state.time_range,
-                    time_zone,
                     search_panel_state.filter,
                 );
             }
@@ -240,7 +240,6 @@ pub struct LogEventContextApiModel {
 fn load<'s>(
     env: Rc<String>,
     time_range: &TimeRange,
-    time_zone: TimeZone,
     mut main_state: Signal<MainState>,
     context_keys: Vec<LogEventContextApiModel>,
 ) {
@@ -264,7 +263,7 @@ fn load<'s>(
         Some(context_keys)
     };
 
-    let (from, to) = time_range.get_date_from_date_to(time_zone);
+    let (from, to) = time_range.get_date_from_date_to();
     spawn(async move {
         let result = load_logs(env.to_string(), level, from, to, context_keys)
             .await
@@ -279,10 +278,9 @@ pub fn search_as_text(
     mut main_state: Signal<MainState>,
     env: Rc<String>,
     time_range: &TimeRange,
-    time_zone: TimeZone,
     phrase: String,
 ) {
-    let (from, to) = time_range.get_date_from_date_to(time_zone);
+    let (from, to) = time_range.get_date_from_date_to();
     spawn(async move {
         let result = search_logs(env.to_string(), from, to, phrase)
             .await

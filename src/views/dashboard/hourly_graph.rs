@@ -1,9 +1,14 @@
 use dioxus::prelude::*;
 use std::collections::BTreeMap;
 
+use crate::models::*;
+
 use super::HourlyStatisticsHttpModel;
 
-pub fn render_hourly_graph(hourly_statistics: &[HourlyStatisticsHttpModel]) -> Element {
+pub fn render_hourly_graph(
+    hourly_statistics: &[HourlyStatisticsHttpModel],
+    time_zone: TimeZone,
+) -> Element {
     let mut hourly_data_to_render = BTreeMap::new();
 
     for itm in hourly_statistics.iter() {
@@ -23,13 +28,16 @@ pub fn render_hourly_graph(hourly_statistics: &[HourlyStatisticsHttpModel]) -> E
     let mut js_error_line = String::new();
 
     for (key, value) in hourly_data_to_render.iter() {
+        let hour_key: DateHourKey = (*key).into();
+        let hour_key_as_string = hour_key.to_local_time(time_zone).to_string();
+
         if js_error_line.len() > 0 {
             js_error_line.push_str(",");
         }
         js_error_line.push_str(
             format!(
                 "['{}', {}, {}, {}, {}, {}]",
-                super::hour_key_to_string(*key),
+                hour_key_as_string,
                 value.fatal,
                 value.error,
                 value.warning,

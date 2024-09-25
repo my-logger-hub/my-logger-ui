@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{states::*, TimeZone};
+use crate::states::*;
 
 #[component]
 pub fn RenderDashboard() -> Element {
@@ -19,7 +19,7 @@ pub fn RenderDashboard() -> Element {
         DataState::None => {
             drop(main_state_read_access);
             main_state.write().dashboard_data = DataState::Loading;
-            request_data(env, main_state, time_zone);
+            request_data(env, main_state);
 
             return rsx! {
                 h1 { "Loading..." }
@@ -33,9 +33,10 @@ pub fn RenderDashboard() -> Element {
         DataState::Loaded(value) => value,
     };
 
-    let hourly_graph = super::render_hourly_graph(&dashboard_data.hourly);
+    let hourly_graph = super::render_hourly_graph(&dashboard_data.hourly, time_zone);
 
-    let top_apps_with_errors = super::render_top_apps_with_errors(&dashboard_data.hourly);
+    let top_apps_with_errors =
+        super::render_top_apps_with_errors(&dashboard_data.hourly, time_zone);
 
     rsx! {
         {hourly_graph},
@@ -43,11 +44,9 @@ pub fn RenderDashboard() -> Element {
     }
 }
 
-fn request_data(env: Rc<String>, mut main_state: Signal<MainState>, time_zone: TimeZone) {
+fn request_data(env: Rc<String>, mut main_state: Signal<MainState>) {
     spawn(async move {
-        let result = get_dashboard(env.to_string(), time_zone.into())
-            .await
-            .unwrap();
+        let result = get_dashboard(env.to_string()).await.unwrap();
         main_state.write().dashboard_data = DataState::Loaded(result);
     });
 }
@@ -68,10 +67,9 @@ pub struct HourlyStatisticsHttpModel {
 }
 
 #[server]
-pub async fn get_dashboard(env: String, time_zone: i64) -> Result<DashboardItem, ServerFnError> {
-    use crate::date_key::DateHourKey;
+pub async fn get_dashboard(env: String) -> Result<DashboardItem, ServerFnError> {
     use crate::my_logger_grpc::*;
-    use rust_extensions::date_time::DateTimeAsMicroseconds;
+
     let client = crate::APP_CTX.get_client(env.as_str()).await;
 
     let items = client
@@ -83,23 +81,14 @@ pub async fn get_dashboard(env: String, time_zone: i64) -> Result<DashboardItem,
     Ok(DashboardItem {
         hourly: items
             .into_iter()
-            .map(|itm| {
-                let key: DateHourKey = itm.hour_key.into();
-                let mut dt: DateTimeAsMicroseconds = key.into();
-
-                dt.add_minutes(-time_zone);
-
-                let hour_key_local: DateHourKey = dt.into();
-
-                HourlyStatisticsHttpModel {
-                    hour_key: hour_key_local.get_value(),
-                    app: itm.app,
-                    info: itm.info_count,
-                    warning: itm.warning_count,
-                    error: itm.error_count,
-                    fatal: itm.fatal_count,
-                    debug: itm.debug_count,
-                }
+            .map(|itm| HourlyStatisticsHttpModel {
+                hour_key: itm.hour_key as i64,
+                app: itm.app,
+                info: itm.info_count,
+                warning: itm.warning_count,
+                error: itm.error_count,
+                fatal: itm.fatal_count,
+                debug: itm.debug_count,
             })
             .collect(),
     })

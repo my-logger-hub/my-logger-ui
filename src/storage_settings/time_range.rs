@@ -1,4 +1,4 @@
-use crate::dialogs::TimeRange;
+use crate::models::*;
 
 pub const TIME_RANGE_KEY: &str = "time-range";
 
@@ -15,7 +15,7 @@ pub fn get() -> TimeRange {
 }
 
 pub fn set(time_range: &TimeRange) {
-    let value = time_range.to_string();
+    let value = time_range.to_string(TimeZone::create_utc_zero());
 
     dioxus_utils::js::GlobalAppSettings::get_local_storage().set(TIME_RANGE_KEY, value.as_str());
 }

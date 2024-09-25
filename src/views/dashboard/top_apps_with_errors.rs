@@ -4,8 +4,13 @@ use dioxus::prelude::*;
 
 use crate::{models::LogPathDataModel, storage_settings::log_level::SelectedLevel, Route};
 
+use crate::models::*;
+
 use super::HourlyStatisticsHttpModel;
-pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpModel]) -> Element {
+pub fn render_top_apps_with_errors(
+    hourly_statistics: &[HourlyStatisticsHttpModel],
+    time_zone: TimeZone,
+) -> Element {
     let mut by_hour_keys = BTreeMap::new();
 
     let mut max_errors = 0;
@@ -44,9 +49,14 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
     let mut items_to_render = Vec::new();
 
     for (hour_key, items) in by_hour_keys.into_iter().rev() {
+        let hour_key: DateHourKey = hour_key.into();
+        let hour_key_as_string_utc_0 = hour_key.to_string();
+
+        let hour_key_as_string = hour_key.to_local_time(time_zone).to_string();
+
         items_to_render.push(rsx! {
             tr { style: "background-color: lightgray;font-weight: bold;    box-shadow: 0 3px 3px #00000012;",
-                td { {super::hour_key_to_string(hour_key)} }
+                td { {hour_key_as_string.as_str()} }
                 td {}
                 td {}
                 td {}
@@ -83,7 +93,7 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
                                             is_ctx_search: true,
                                             search_string: generate_app_line(&app),
                                             level: SelectedLevel::Error.into(),
-                                            time_range: super::hour_key_to_string(hour_key),
+                                            time_range: hour_key_as_string_utc_0.to_string(),
                                         }
                                             .to_base_64(),
                                     ],
@@ -109,7 +119,7 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
                                             is_ctx_search: true,
                                             search_string: generate_app_line(&app),
                                             level: SelectedLevel::FatalError.into(),
-                                            time_range: super::hour_key_to_string(hour_key),
+                                            time_range: hour_key_as_string_utc_0.to_string(),
                                         }
                                             .to_base_64(),
                                     ],
@@ -135,7 +145,7 @@ pub fn render_top_apps_with_errors(hourly_statistics: &[HourlyStatisticsHttpMode
                                             is_ctx_search: true,
                                             search_string: generate_app_line(&app),
                                             level: SelectedLevel::Warning.into(),
-                                            time_range: super::hour_key_to_string(hour_key),
+                                            time_range: hour_key_as_string_utc_0.to_string(),
                                         }
                                             .to_base_64(),
                                     ],

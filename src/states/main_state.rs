@@ -4,8 +4,10 @@ use dioxus_utils::js::WebLocalStorage;
 
 use crate::{
     storage_settings::selected_time_zone::SelectedTimeZone, DashboardItem, IgnoreEventApiModel,
-    LogApiItem, OneTimeIgnoreHttpModel, TimeZone,
+    LogApiItem, OneTimeIgnoreHttpModel,
 };
+
+use crate::models::*;
 
 pub const ENV_LOCAL_STORAGE_KEY: &str = "env";
 use super::DataState;

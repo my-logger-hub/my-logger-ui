@@ -15,9 +15,18 @@ impl TimeZone {
         }
     }
 
-    pub fn to_time_zone_date_time(&self, mut dt: DateTimeAsMicroseconds) -> DateTimeAsMicroseconds {
+    pub fn to_local_time(&self, mut dt: DateTimeAsMicroseconds) -> DateTimeAsMicroseconds {
         dt.add_minutes(-self.0);
         dt
+    }
+
+    pub fn to_utc_time(&self, mut dt: DateTimeAsMicroseconds) -> DateTimeAsMicroseconds {
+        dt.add_minutes(self.0);
+        dt
+    }
+
+    pub fn is_utc_zero(&self) -> bool {
+        self.0 == 0
     }
 }
 

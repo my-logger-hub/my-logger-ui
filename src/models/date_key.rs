@@ -2,6 +2,8 @@ use std::{collections::BTreeMap, time::Duration};
 
 use rust_extensions::date_time::{DateTimeAsMicroseconds, DateTimeStruct, TimeStruct};
 
+use super::TimeZone;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 
 pub struct DateHourKey(i64);
@@ -77,9 +79,29 @@ impl DateHourKey {
         result.insert(7, '-');
         result.insert(10, 'T');
         result.insert(13, ':');
-        result.push_str(":00:00");
+        result.push_str("00:00");
 
         result
+    }
+
+    pub fn to_local_time(&self, time_zone: TimeZone) -> Self {
+        if time_zone.is_utc_zero() {
+            return *self;
+        }
+
+        let dt: DateTimeAsMicroseconds = (*self).into();
+        let dt = time_zone.to_local_time(dt);
+        dt.into()
+    }
+
+    pub fn to_utc_time(&self, time_zone: TimeZone) -> Self {
+        if time_zone.is_utc_zero() {
+            return *self;
+        }
+
+        let dt: DateTimeAsMicroseconds = (*self).into();
+        let dt = time_zone.to_utc_time(dt);
+        dt.into()
     }
 
     pub fn to_html_input_date_local_string(&self) -> String {
