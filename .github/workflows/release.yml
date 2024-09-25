@@ -26,6 +26,8 @@ jobs:
         run: |
           export GIT_HUB_TOKEN=${{ secrets.PUBLISH_TOKEN }}
           dx build --platform fullstack --release
+          ls ./dist
+          python build.py ./dist/index.html
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v3
