@@ -177,3 +177,12 @@ body {
     display: none;
     border: 1px solid lightgray
 }
+
+
+.server-info {
+    color: white;
+    position: absolute;
+    bottom: 7px;
+    text-align: center;
+    width: var(--panel-width);
+}

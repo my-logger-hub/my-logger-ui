@@ -124,7 +124,10 @@ fn App() -> Element {
     use_context_provider(|| Signal::new(DialogState::None));
     let mut main_state = consume_context::<Signal<MainState>>();
 
-    let has_envs = { main_state.read().has_envs() };
+    let has_envs = {
+        let main_state = main_state.read();
+        main_state.has_envs()
+    };
 
     if has_envs {
         return rsx! {

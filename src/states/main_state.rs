@@ -20,6 +20,7 @@ pub struct MainState {
     pub ignore_events: DataState<Vec<Rc<IgnoreEventApiModel>>>,
     pub one_time_ignore_events: DataState<Vec<Rc<OneTimeIgnoreHttpModel>>>,
     pub selected_time_zone: SelectedTimeZone,
+    pub server_settings: DataState<Rc<ServerInfoModel>>,
     time_zone: TimeZone,
 }
 
@@ -34,6 +35,7 @@ impl MainState {
             dashboard_data: DataState::None,
             ignore_events: DataState::None,
             one_time_ignore_events: DataState::None,
+            server_settings: DataState::None,
             storage,
             time_zone: TimeZone::default(),
             selected_time_zone,
@@ -65,6 +67,7 @@ impl MainState {
     pub fn active_env_changed(&mut self, value: &str) {
         dioxus_utils::js::GlobalAppSettings::get_local_storage().set(ENV_LOCAL_STORAGE_KEY, value);
         self.reset_data();
+        self.server_settings = DataState::None;
     }
 
     pub fn get_selected_env(&self) -> Rc<String> {
