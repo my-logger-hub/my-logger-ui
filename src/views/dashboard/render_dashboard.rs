@@ -31,6 +31,7 @@ pub fn RenderDashboard() -> Element {
             };
         }
         DataState::Loaded(value) => value,
+        DataState::Error(err) => return rsx! { "Error loading data: {err}" },
     };
 
     let hourly_graph = super::render_hourly_graph(&dashboard_data.hourly, time_zone);
@@ -46,8 +47,16 @@ pub fn RenderDashboard() -> Element {
 
 fn request_data(env: Rc<String>, mut main_state: Signal<MainState>) {
     spawn(async move {
-        let result = get_dashboard(env.to_string()).await.unwrap();
-        main_state.write().dashboard_data = DataState::Loaded(result);
+        let result = get_dashboard(env.to_string()).await;
+
+        match result {
+            Ok(result) => {
+                main_state.write().dashboard_data = DataState::Loaded(result);
+            }
+            Err(err) => {
+                main_state.write().dashboard_data = DataState::Error(err.to_string());
+            }
+        }
     });
 }
 

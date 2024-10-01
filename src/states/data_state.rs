@@ -5,6 +5,7 @@ pub enum DataState<T: Debug + Clone> {
     None,
     Loading,
     Loaded(T),
+    Error(String),
 }
 
 impl<T: Debug + Clone> DataState<T> {
@@ -27,6 +28,7 @@ impl<T: Debug + Clone> DataState<T> {
             DataState::None => NotLoadedCases::None.into(),
             DataState::Loading => NotLoadedCases::Loading.into(),
             DataState::Loaded(_) => None,
+            DataState::Error(_) => None,
         }
     }
 }

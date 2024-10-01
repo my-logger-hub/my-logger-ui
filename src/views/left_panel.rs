@@ -53,8 +53,16 @@ pub fn LeftPanel() -> Element {
             main_state.write().server_settings = DataState::Loading;
 
             spawn(async move {
-                let result = get_server_info(env.to_string()).await.unwrap();
-                main_state.write().server_settings = DataState::Loaded(Rc::new(result));
+                let result = get_server_info(env.to_string()).await;
+
+                match result {
+                    Ok(result) => {
+                        main_state.write().server_settings = DataState::Loaded(Rc::new(result));
+                    }
+                    Err(err) => {
+                        main_state.write().server_settings = DataState::Error(err.to_string());
+                    }
+                }
             });
 
             None
@@ -62,6 +70,9 @@ pub fn LeftPanel() -> Element {
         DataState::Loading => None,
 
         DataState::Loaded(value) => Some(value),
+        DataState::Error(err) => {
+            return rsx! { "Error loading from server: {err}" };
+        }
     };
 
     let time_zone = format!("TimeZone: {}", time_zone.to_string());

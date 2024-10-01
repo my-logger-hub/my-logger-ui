@@ -58,6 +58,7 @@ pub fn RenderLogs() -> Element {
             };
         }
         DataState::Loaded(value) => value,
+        DataState::Error(err) => return rsx! { "Error loading data: {err}" },
     };
 
     let items = items.iter().map(|itm| {
@@ -265,12 +266,18 @@ fn load<'s>(
 
     let (from, to) = time_range.get_date_from_date_to();
     spawn(async move {
-        let result = load_logs(env.to_string(), level, from, to, context_keys)
-            .await
-            .unwrap();
+        let result = load_logs(env.to_string(), level, from, to, context_keys).await;
 
-        let items: Vec<Rc<LogApiItem>> = result.into_iter().map(Rc::new).collect();
-        main_state.write().logs_data = DataState::Loaded(items);
+        match result {
+            Ok(result) => {
+                let items: Vec<Rc<LogApiItem>> = result.into_iter().map(Rc::new).collect();
+                main_state.write().logs_data = DataState::Loaded(items);
+            }
+
+            Err(err) => {
+                main_state.write().logs_data = DataState::Error(err.to_string());
+            }
+        }
     });
 }
 
@@ -282,11 +289,17 @@ pub fn search_as_text(
 ) {
     let (from, to) = time_range.get_date_from_date_to();
     spawn(async move {
-        let result = search_logs(env.to_string(), from, to, phrase)
-            .await
-            .unwrap();
+        let result = search_logs(env.to_string(), from, to, phrase).await;
 
-        main_state.write().logs_data = DataState::Loaded(result.into_iter().map(Rc::new).collect());
+        match result {
+            Ok(result) => {
+                main_state.write().logs_data =
+                    DataState::Loaded(result.into_iter().map(Rc::new).collect());
+            }
+            Err(err) => {
+                main_state.write().logs_data = DataState::Error(err.to_string());
+            }
+        }
     });
 }
 

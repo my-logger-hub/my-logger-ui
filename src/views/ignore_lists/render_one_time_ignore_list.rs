@@ -34,6 +34,7 @@ pub fn RenderOneTimeIgnoreList() -> Element {
         }
 
         DataState::Loaded(value) => value,
+        DataState::Error(err) => return rsx! { "Error loading data: {err}" },
     };
 
     let table_content = value.into_iter().map(|itm| {
@@ -93,9 +94,8 @@ pub fn RenderOneTimeIgnoreList() -> Element {
                                         on_ok: EventHandler::new(move |item_to_save| {
                                             let env = env.clone();
                                             spawn(async move {
-                                                save_one_time_ignore_event(env.to_string(), item_to_save)
-                                                    .await
-                                                    .unwrap();
+                                                let _ = save_one_time_ignore_event(env.to_string(), item_to_save)
+                                                    .await;
                                                 main_state.write().reset_data();
                                             });
                                         }),
@@ -118,12 +118,11 @@ pub fn RenderOneTimeIgnoreList() -> Element {
                                             let env_to_delete = env_to_delete.clone();
                                             let id_to_delete = id_to_delete.clone();
                                             spawn(async move {
-                                                delete_one_time_ignore_event(
+                                                let _ = delete_one_time_ignore_event(
                                                         env_to_delete.to_string(),
                                                         id_to_delete.to_string(),
                                                     )
-                                                    .await
-                                                    .unwrap();
+                                                    .await;
                                                 main_state.write().reset_data();
                                             });
                                         }),
@@ -157,9 +156,8 @@ pub fn RenderOneTimeIgnoreList() -> Element {
                                     on_ok: EventHandler::new(move |item_to_save| {
                                         let env = env.clone();
                                         spawn(async move {
-                                            save_one_time_ignore_event(env.to_string(), item_to_save)
-                                                .await
-                                                .unwrap();
+                                            let _ = save_one_time_ignore_event(env.to_string(), item_to_save)
+                                                .await;
                                             consume_context::<Signal<MainState>>().write().reset_data();
                                         });
                                     }),
@@ -178,9 +176,18 @@ pub fn RenderOneTimeIgnoreList() -> Element {
 fn load_from_db(env: Rc<String>) {
     spawn(async move {
         let mut main_state = consume_context::<Signal<MainState>>();
-        let result = get_one_time_ignore_events(env.to_string()).await.unwrap();
-        let result = result.into_iter().map(|itm| Rc::new(itm)).collect();
-        main_state.write().one_time_ignore_events = DataState::Loaded(result);
+        let result = get_one_time_ignore_events(env.to_string()).await;
+
+        match result{
+            Ok(result)=>{
+                let result = result.into_iter().map(|itm| Rc::new(itm)).collect();
+                main_state.write().one_time_ignore_events = DataState::Loaded(result);
+        
+            }
+            Err(err)=>{
+                main_state.write().one_time_ignore_events = DataState::Error(err.to_string());
+            }
+        }
     });
 }
 

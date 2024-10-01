@@ -38,6 +38,7 @@ pub fn RenderIgnoreList() -> Element {
         }
 
         DataState::Loaded(value) => value,
+        DataState::Error(err) => return rsx! { "Error loading data: {err}" },
     };
 
     let table_content = value.into_iter().map(|itm| {
@@ -80,8 +81,7 @@ pub fn RenderIgnoreList() -> Element {
                                                     env.to_string(),
                                                     itm_to_delete.as_ref().clone(),
                                                 )
-                                                .await
-                                                .unwrap();
+                                                .await;
                                             main_state.write().reset_data();
                                             dialog_state.set(DialogState::None)
                                         });
@@ -115,7 +115,7 @@ pub fn RenderIgnoreList() -> Element {
                                         spawn(async move {
                                             let env = env.clone();
                                             spawn(async move {
-                                                add_ignore_event(env.to_string(), itm).await.unwrap();
+                                                let _ = add_ignore_event(env.to_string(), itm).await;
                                                 main_state.write().reset_data();
                                                 dialog_state.set(DialogState::None);
                                             });
@@ -143,9 +143,18 @@ pub struct IgnoreEventApiModel {
 
 fn load_ignore_events(env: Rc<String>, mut main_state: Signal<MainState>) {
     spawn(async move {
-        let result = get_ignore_events(env.to_string()).await.unwrap();
-        let result = result.into_iter().map(|itm| Rc::new(itm)).collect();
-        main_state.write().ignore_events = DataState::Loaded(result);
+        let result = get_ignore_events(env.to_string()).await;
+
+        match result{
+            Ok(result) => {
+                let result = result.into_iter().map(|itm| Rc::new(itm)).collect();
+                main_state.write().ignore_events = DataState::Loaded(result);
+            }
+            Err(err) => {
+                main_state.write().ignore_events = DataState::Error(err.to_string());
+            }
+        }
+
     });
 }
 
