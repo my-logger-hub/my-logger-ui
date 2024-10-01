@@ -12,19 +12,3 @@ pub enum InputValue<T: Clone> {
     Value(T),
     InvalidValue,
 }
-
-impl<T: Clone> InputValue<T> {
-    pub fn has_value(&self) -> bool {
-        match self {
-            InputValue::Value(_) => true,
-            _ => false,
-        }
-    }
-
-    pub fn unwrap_value(&self) -> &T {
-        match self {
-            InputValue::Value(value) => value,
-            _ => panic!("InputValue::unwrap_value called on non-Value variant"),
-        }
-    }
-}

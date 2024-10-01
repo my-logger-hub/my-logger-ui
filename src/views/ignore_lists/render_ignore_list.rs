@@ -77,7 +77,7 @@ pub fn RenderIgnoreList() -> Element {
                                         let env = env_delete.clone();
                                         let itm_to_delete = itm_to_delete.clone();
                                         spawn(async move {
-                                            delete_ignore_event(
+                                            let _ = delete_ignore_event(
                                                     env.to_string(),
                                                     itm_to_delete.as_ref().clone(),
                                                 )
@@ -97,39 +97,41 @@ pub fn RenderIgnoreList() -> Element {
 
     rsx! {
         table { class: "table table-striped",
-            tr {
-                th { style: "width:25px" }
-                th { "Level" }
-                th { "Application" }
-                th { "Marker" }
-                th {
-                    button {
-                        class: "btn btn-sm btn-primary",
-                        style: "padding:2px 6px",
-                        onclick: move |_| {
-                            let env = env.clone();
-                            dialog_state
-                                .set(DialogState::AddIgnoreEvent {
-                                    on_ok: EventHandler::new(move |itm| {
-                                        let env = env.clone();
-                                        spawn(async move {
+            thead {
+                tr {
+                    th { style: "width:25px" }
+                    th { "Level" }
+                    th { "Application" }
+                    th { "Marker" }
+                    th {
+                        button {
+                            class: "btn btn-sm btn-primary",
+                            style: "padding:2px 6px",
+                            onclick: move |_| {
+                                let env = env.clone();
+                                dialog_state
+                                    .set(DialogState::AddIgnoreEvent {
+                                        on_ok: EventHandler::new(move |itm| {
                                             let env = env.clone();
                                             spawn(async move {
-                                                let _ = add_ignore_event(env.to_string(), itm).await;
+                                                let env = env.clone();
+                                                spawn(async move {
+                                                    let _ = add_ignore_event(env.to_string(), itm).await;
+                                                    main_state.write().reset_data();
+                                                    dialog_state.set(DialogState::None);
+                                                });
                                                 main_state.write().reset_data();
-                                                dialog_state.set(DialogState::None);
                                             });
-                                            main_state.write().reset_data();
-                                        });
-                                    }),
-                                });
-                        },
-                        "Add"
+                                        }),
+                                    });
+                            },
+                            "Add"
+                        }
                     }
                 }
             }
 
-            {table_content}
+            tbody { {table_content} }
         }
     }
 }

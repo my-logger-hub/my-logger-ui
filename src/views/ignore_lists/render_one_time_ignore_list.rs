@@ -138,37 +138,39 @@ pub fn RenderOneTimeIgnoreList() -> Element {
 
     rsx! {
         table { class: "table table-striped",
-            tr {
-                th { "Levels" }
-                th { "Message match" }
-                th { "Context Match" }
-                th { "Skip amount" }
-                th { "Minutes to wait" }
-                th {
-                    button {
-                        class: "btn btn-primary btn-sm",
-                        style: "padding:2px 6px",
-                        onclick: move |_| {
-                            let env = env.clone();
-                            dialog_state
-                                .set(DialogState::EditOneTimeIgnoreEvent {
-                                    itm: OneTimeIgnoreHttpModel::default().into(),
-                                    on_ok: EventHandler::new(move |item_to_save| {
-                                        let env = env.clone();
-                                        spawn(async move {
-                                            let _ = save_one_time_ignore_event(env.to_string(), item_to_save)
-                                                .await;
-                                            consume_context::<Signal<MainState>>().write().reset_data();
-                                        });
-                                    }),
-                                });
-                        },
-                        "+"
+            thead {
+                tr {
+                    th { "Levels" }
+                    th { "Message match" }
+                    th { "Context Match" }
+                    th { "Skip amount" }
+                    th { "Minutes to wait" }
+                    th {
+                        button {
+                            class: "btn btn-primary btn-sm",
+                            style: "padding:2px 6px",
+                            onclick: move |_| {
+                                let env = env.clone();
+                                dialog_state
+                                    .set(DialogState::EditOneTimeIgnoreEvent {
+                                        itm: OneTimeIgnoreHttpModel::default().into(),
+                                        on_ok: EventHandler::new(move |item_to_save| {
+                                            let env = env.clone();
+                                            spawn(async move {
+                                                let _ = save_one_time_ignore_event(env.to_string(), item_to_save)
+                                                    .await;
+                                                consume_context::<Signal<MainState>>().write().reset_data();
+                                            });
+                                        }),
+                                    });
+                            },
+                            "+"
+                        }
                     }
                 }
             }
 
-            {table_content}
+            tbody { {table_content} }
         }
     }
 }
