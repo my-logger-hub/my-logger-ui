@@ -54,6 +54,10 @@ impl AppContext {
 
     pub async fn set_ui_url(&self, ui_url: String) {
         let mut ui_url_access = self.ui_url.lock().await;
+
+        if *ui_url_access != ui_url {
+            println!("UI URL is set to {}", ui_url);
+        }
         *ui_url_access = ui_url;
     }
 
