@@ -52,8 +52,8 @@ enum Route {
     #[route("/")]
     Home {},
 
-    #[route("/env/:env_name")]
-    ToEnv { env_name: String },
+    #[route("/dashboard/:env_name")]
+    Dashboard { env_name: String },
 
     #[route("/logs/:..data")]
     Logs { data: Vec<String> },
@@ -104,7 +104,7 @@ fn Logs(data: Vec<String>) -> Element {
 }
 
 #[component]
-fn ToEnv(env_name: String) -> Element {
+fn Dashboard(env_name: String) -> Element {
     use_context_provider(|| Signal::new(LocationState::Dashboard));
 
     let mut envs_to_load_state = use_signal(|| DataState::None);
