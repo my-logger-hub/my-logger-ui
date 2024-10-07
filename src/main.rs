@@ -52,6 +52,9 @@ enum Route {
     #[route("/")]
     Home {},
 
+    #[route("/env/:env_name")]
+    ToEnv { env_name: String },
+
     #[route("/logs/:..data")]
     Logs { data: Vec<String> },
 
@@ -95,6 +98,54 @@ fn Logs(data: Vec<String>) -> Element {
             crate::storage_settings::time_range::set_as_str(&model.time_range);
         }
     }
+
+    //crate::storage_settings::clean_all();
+    App()
+}
+
+#[component]
+fn ToEnv(env_name: String) -> Element {
+    use_context_provider(|| Signal::new(LocationState::Dashboard));
+
+    let mut envs_to_load_state = use_signal(|| DataState::None);
+
+    let envs_to_load_data = { envs_to_load_state.read().clone() };
+
+    let envs = match envs_to_load_data {
+        DataState::None => {
+            envs_to_load_state.set(DataState::Loading);
+            spawn(async move {
+                let result = get_envs().await;
+
+                match result {
+                    Ok(result) => {
+                        envs_to_load_state.set(DataState::Loaded(result));
+                    }
+                    Err(err) => {
+                        envs_to_load_state.set(DataState::Error(err.to_string()));
+                    }
+                }
+            });
+            return rsx! { "[0]Loading envs..." };
+        }
+        DataState::Loading => return rsx! { "[1]Loading envs..." },
+
+        DataState::Loaded(envs) => envs,
+
+        DataState::Error(err) => {
+            let err = format!("Error loading envs: {}", err);
+            return rsx! {
+                {err}
+            };
+        }
+    };
+
+    if envs.iter().find(|x| *x == &env_name).is_none() {
+        return rsx! { "Env not found" };
+    }
+
+    dioxus_utils::js::GlobalAppSettings::get_local_storage()
+        .set(ENV_LOCAL_STORAGE_KEY, env_name.as_str());
 
     //crate::storage_settings::clean_all();
     App()
