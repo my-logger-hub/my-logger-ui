@@ -114,10 +114,9 @@ fn Dashboard(env_name: String) -> Element {
     let envs = match envs_to_load_data {
         DataState::None => {
             envs_to_load_state.set(DataState::Loading);
-            let origin = dioxus_utils::js::GlobalAppSettings::get_window()
-                .location()
-                .origin()
-                .unwrap();
+            let origin = dioxus_utils::js::GlobalAppSettings::new()
+                .get_origin()
+                .to_string();
             spawn(async move {
                 let result = get_envs(origin).await;
 
@@ -191,10 +190,10 @@ fn App() -> Element {
     }
 
     let resource = use_resource(|| {
-        let origin = dioxus_utils::js::GlobalAppSettings::get_window()
-            .location()
-            .origin()
-            .unwrap();
+        let origin = dioxus_utils::js::GlobalAppSettings::new()
+            .get_origin()
+            .to_string();
+
         get_envs(origin)
     });
 
