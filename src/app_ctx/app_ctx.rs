@@ -11,6 +11,7 @@ pub struct AppContext {
     pub settings_reader: SettingsReader<SettingsModel>,
     pub clients_cache: Mutex<HashMap<String, Arc<MyLoggerGrpcClient>>>,
     pub ssh_sessions_pool: Arc<SshSessionsPool>,
+    pub ui_url: Mutex<String>,
 }
 
 impl AppContext {
@@ -19,6 +20,7 @@ impl AppContext {
             settings_reader: SettingsReader::new("~/.my-logger-ui"),
             clients_cache: Mutex::new(HashMap::default()),
             ssh_sessions_pool: SshSessionsPool::new().into(),
+            ui_url: Mutex::new(String::new()),
         }
     }
 
@@ -48,5 +50,17 @@ impl AppContext {
         clients_cache.insert(env.to_string(), grpc_client.clone());
 
         grpc_client
+    }
+
+    pub async fn set_ui_url(&self, ui_url: String) {
+        let mut ui_url_access = self.ui_url.lock().await;
+        *ui_url_access = ui_url;
+    }
+
+    pub async fn get_ui_url(&self, env: &str) -> String {
+        let ui_url_access = self.ui_url.lock().await;
+        let mut result = ui_url_access.clone();
+        result.push_str(env);
+        result
     }
 }

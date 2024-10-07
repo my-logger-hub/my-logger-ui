@@ -312,11 +312,12 @@ pub async fn search_logs(
 ) -> Result<Vec<LogApiItem>, ServerFnError> {
     use crate::my_logger_grpc::*;
 
+    let ui_url = crate::APP_CTX.get_ui_url(&env).await;
     let result = crate::APP_CTX
         .get_client(env.as_str())
         .await
         .scan_and_search(ScanAndSearchRequest {
-            tenant_id: "Default".to_string(),
+            ui_url,
             from_time: from_time,
             to_time: to_time,
             take: 200,
@@ -384,7 +385,7 @@ pub async fn load_logs(
         .get_client(env.as_str())
         .await
         .read(ReadLogEventRequest {
-            tenant_id: String::new(),
+            ui_url: crate::APP_CTX.get_ui_url(&env).await,
             from_time: from_time,
             to_time: to_time,
             levels,
