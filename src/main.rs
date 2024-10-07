@@ -266,7 +266,7 @@ fn ActiveApp() -> Element {
 #[server]
 pub async fn get_envs(ui_url: String) -> Result<Vec<String>, ServerFnError> {
     let mut ui_url = ui_url;
-    if ui_url.starts_with("https://") {
+    if ui_url.starts_with("https") {
         if ui_url.ends_with("/") {
             ui_url.push_str("dashboard/");
         } else {
