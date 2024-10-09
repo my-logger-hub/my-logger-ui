@@ -74,6 +74,10 @@ impl SelectedLevel {
     }
 }
 
+pub fn clear() {
+    dioxus_utils::js::GlobalAppSettings::get_local_storage().delete(STORAGE_LEVEL_KEY);
+}
+
 pub const LOG_LEVEL_ALL_ID: &str = "all";
 pub const LOG_LEVEL_WARNING_ID: &str = "warning";
 pub const LOG_LEVEL_INFO_ID: &str = "info";

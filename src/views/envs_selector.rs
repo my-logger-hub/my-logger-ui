@@ -1,5 +1,3 @@
-use std::thread::current;
-
 use dioxus::prelude::*;
 
 use crate::{states::*, Route};

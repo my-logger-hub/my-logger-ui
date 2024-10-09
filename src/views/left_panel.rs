@@ -113,7 +113,16 @@ pub fn LeftPanel() -> Element {
 
         Link { class: "menu-item {dashboard_active}", to: "/", "Dashboard" }
 
-        Link { class: "menu-item {logs_active}", to: "/logs", "Logs" }
+        Link {
+            class: "menu-item {logs_active}",
+            onclick: move |_| {
+                crate::storage_settings::time_range::clear();
+                crate::storage_settings::search_line::clear();
+                crate::storage_settings::log_level::clear();
+            },
+            to: "/logs",
+            "Logs"
+        }
 
         Link { class: "menu-item {ignore_lists_active}", to: "/ignoreLists", "Ignore Lists" }
 

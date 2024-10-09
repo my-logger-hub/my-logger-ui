@@ -10,3 +10,7 @@ pub fn set(search_line: &str) {
     dioxus_utils::js::GlobalAppSettings::get_local_storage()
         .set(STORAGE_SEARCH_LINE_KEY, search_line);
 }
+
+pub fn clear() {
+    dioxus_utils::js::GlobalAppSettings::get_local_storage().delete(STORAGE_SEARCH_LINE_KEY);
+}

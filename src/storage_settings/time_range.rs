@@ -23,3 +23,7 @@ pub fn set(time_range: &TimeRange) {
 pub fn set_as_str(time_range: &str) {
     dioxus_utils::js::GlobalAppSettings::get_local_storage().set(TIME_RANGE_KEY, time_range);
 }
+
+pub fn clear() {
+    dioxus_utils::js::GlobalAppSettings::get_local_storage().delete(TIME_RANGE_KEY);
+}
