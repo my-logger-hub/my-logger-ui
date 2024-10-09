@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::states::*;
+use crate::{states::*, Route};
 
 #[component]
 pub fn EnvsSelector() -> Element {
@@ -37,9 +37,10 @@ pub fn EnvsSelector() -> Element {
 
             oninput: move |ctx| {
                 let value = ctx.value();
-                consume_context::<Signal<MainState>>()
-                    .write()
-                    .active_env_changed(value.as_str());
+                navigator()
+                    .push(Route::Dashboard {
+                        env_name: value,
+                    });
             },
             {envs_options}
         }
