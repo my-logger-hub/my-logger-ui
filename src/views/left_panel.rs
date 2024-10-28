@@ -107,7 +107,7 @@ pub fn LeftPanel() -> Element {
             h1 { style: "color:white; padding:5px; text-align:center", "Logs" }
         }
 
-        div { style: "    color: white;text-align: center;", "{time_zone}" }
+        div { style: "color: white;text-align: center;", "{time_zone}" }
 
         div { style: "padding: 5px" }
 

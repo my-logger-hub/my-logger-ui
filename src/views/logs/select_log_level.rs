@@ -22,7 +22,7 @@ pub fn SelectLogLevel(value: SelectedLevel, on_change: EventHandler<SelectedLeve
         SelectedLevel::Error => "background: red; color:white;    font-weight: bold;",
         SelectedLevel::Warning => "background: orange;    font-weight: bold;",
         SelectedLevel::Info => "background: darkgreen;font-weight: bold;color:white;",
-        SelectedLevel::Debug => "background: lightgray;color: black;    font-weight: bold;",
+        SelectedLevel::Debug => "background: lightgray;color: black; font-weight: bold;",
     };
 
     rsx! {

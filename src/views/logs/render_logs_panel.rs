@@ -45,8 +45,10 @@ pub fn RenderLogsPanel(
         .time_range
         .to_string(time_zone);
 
+    let is_ctx_search = search_panel_state_read_access.search_type.is_ctx_search();
+
     let second_path = LogPathDataModel {
-        is_ctx_search: search_panel_state_read_access.search_type.is_ctx_search(),
+        is_ctx_search,
         search_string: search_panel_state_read_access.filter.clone(),
         level: crate::storage_settings::log_level::get().into(),
         time_range: time_range_value.to_string(),
@@ -104,8 +106,8 @@ pub fn RenderLogsPanel(
                                 crate::storage_settings::ctx_search::set(value.is_ctx_search());
                                 search_panel_state.write().search_type = value;
                             },
-                            option { value: "ctx", "Ctx Search" }
-                            option { value: "text", "Text Search" }
+                            option { selected: is_ctx_search, value: "ctx", "Ctx Search" }
+                            option { selected: !is_ctx_search, value: "text", "Text Search" }
                         }
                     }
                     input {

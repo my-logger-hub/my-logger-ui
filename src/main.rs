@@ -92,6 +92,9 @@ fn Logs(data: Vec<String>) -> Element {
 
     if let Some(data) = data.get(0) {
         if let Some(model) = LogPathDataModel::from_base_64(data.as_str()) {
+            //            let model_str = format!("model: {:?}", model);
+            //            dioxus_utils::js::console_log(model_str.as_str());
+
             crate::storage_settings::log_level::set(model.get_log_level());
             crate::storage_settings::search_line::set(&model.search_string);
             crate::storage_settings::ctx_search::set(model.is_ctx_search);
