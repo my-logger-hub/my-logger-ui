@@ -14,7 +14,7 @@ pub fn EditTimeRangeDialog(
 ) -> Element {
     let mut dialog_state = consume_context::<Signal<DialogState>>();
 
-    let mut time_range_state = use_signal(|| TimeRangeState::from(value, time_zone));
+    let mut time_range_state = use_signal(|| TimeRangeState::from(value));
 
     let time_range_value = time_range_state.read().get_current_value();
 
@@ -153,9 +153,8 @@ struct TimeRangeState {
 }
 
 impl TimeRangeState {
-    pub fn from(src_value: TimeRange, time_zone: TimeZone) -> Self {
+    pub fn from(src_value: TimeRange) -> Self {
         let now = dioxus_utils::js::now_date_time();
-        let now = time_zone.to_local_time(now);
 
         match src_value {
             TimeRange::HoursAgo(v) => {

@@ -33,6 +33,14 @@ pub fn RenderLogs() -> Element {
         )
     };
 
+    let is_ctx_search = {
+        let search_panel_state = consume_context::<Signal<SearchPanelState>>();
+        let search_panel_state_read_access = search_panel_state.read();
+        search_panel_state_read_access.search_type.is_ctx_search()
+    };
+
+    let cursor = if is_ctx_search { "cursor:pointer;" } else { "" };
+
     let env_on_refresh = env.clone();
     let top_panel = rsx! {
         RenderLogsPanel {
@@ -75,11 +83,13 @@ pub fn RenderLogs() -> Element {
                 let value = ctx.value.to_string();
                 rsx! {
                     div {
-                        style: "margin:0;padding:0; cursor:pointer;",
+                        style: "margin:0;padding:0; {cursor}",
                         onclick: move |_| {
-                            consume_context::<Signal<SearchPanelState>>()
-                                .write()
-                                .append_filter_conditions(&key, &value);
+                            if is_ctx_search {
+                                consume_context::<Signal<SearchPanelState>>()
+                                    .write()
+                                    .append_filter_conditions(&key, &value);
+                            }
                         },
                         "{key}: '{value}'"
                     }
@@ -94,11 +104,13 @@ pub fn RenderLogs() -> Element {
                 td { style: "margin:0;padding:0", "{&dt.to_rfc3339()[..26]}" }
                 td { style: "margin:0;padding:0",
                     div {
-                        style: "cursor: pointer",
+                        style: "{cursor}",
                         onclick: move |_| {
-                            consume_context::<Signal<SearchPanelState>>()
-                                .write()
-                                .append_filter_conditions("Process", &process_name);
+                            if is_ctx_search {
+                                consume_context::<Signal<SearchPanelState>>()
+                                    .write()
+                                    .append_filter_conditions("Process", &process_name);
+                            }
                         },
                         "{itm.process_name}"
                     }
