@@ -5,9 +5,9 @@ mod states;
 mod js_bridge;
 
 mod models;
-
 #[cfg(feature = "server")]
-use crate::app_ctx::AppContext;
+mod server;
+
 use crate::{
     dialogs::{DialogState, RenderDialog},
     states::*,
@@ -16,32 +16,15 @@ use crate::{
 
 use dioxus::prelude::*;
 
-#[cfg(feature = "server")]
-mod app_ctx;
 mod components;
-#[cfg(feature = "server")]
-mod grpc_client;
+
 mod insights;
 mod log_event_context_parser;
 mod storage_settings;
 
-#[cfg(feature = "server")]
-mod settings_model;
 mod views;
 
 mod dialogs;
-
-#[cfg(feature = "server")]
-lazy_static::lazy_static! {
-    pub static ref APP_CTX: AppContext = {
-       AppContext::new()
-    };
-}
-
-#[cfg(feature = "server")]
-pub mod my_logger_grpc {
-    tonic::include_proto!("my_logger");
-}
 
 const IGNORE_SINGLE_TIME_SUB_PATH: &str = "ignore-single-time";
 
@@ -274,10 +257,10 @@ pub async fn get_envs(ui_url: String) -> Result<Vec<String>, ServerFnError> {
         } else {
             ui_url.push_str("/dashboard/");
         }
-        crate::APP_CTX.set_ui_url(ui_url).await;
+        crate::server::APP_CTX.set_ui_url(ui_url).await;
     }
 
-    let result = crate::APP_CTX
+    let result = crate::server::APP_CTX
         .settings_reader
         .get_settings()
         .await

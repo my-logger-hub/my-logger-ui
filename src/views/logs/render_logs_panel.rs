@@ -197,7 +197,7 @@ impl SearchType {
 
 #[server]
 pub async fn get_insight_keys(env: String) -> Result<Vec<String>, ServerFnError> {
-    let client = crate::APP_CTX.get_client(env.as_str()).await;
+    let client = crate::server::APP_CTX.get_client(env.as_str()).await;
     let response = client.get_insights_keys(()).await;
 
     match response {

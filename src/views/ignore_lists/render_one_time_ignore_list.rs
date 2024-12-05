@@ -220,7 +220,7 @@ impl Default for OneTimeIgnoreHttpModel {
 pub async fn get_one_time_ignore_events(
     env: String,
 ) -> Result<Vec<OneTimeIgnoreHttpModel>, ServerFnError> {
-    let response = crate::APP_CTX
+    let response = crate::server::APP_CTX
         .get_client(env.as_str())
         .await
         .get_ignore_single_events(())
@@ -264,9 +264,9 @@ async fn save_one_time_ignore_event(
     env: String,
     itm: OneTimeIgnoreHttpModel,
 ) -> Result<(), ServerFnError> {
-    use my_logger_grpc::*;
+    use crate::server::my_logger_grpc::*;
 
-    crate::APP_CTX
+    crate::server::APP_CTX
         .get_client(env.as_str())
         .await
         .set_ignore_single_event(IgnoreSingleEventGrpcModel {
@@ -304,8 +304,8 @@ async fn save_one_time_ignore_event(
 
 #[server]
 async fn delete_one_time_ignore_event(env: String, id: String) -> Result<(), ServerFnError> {
-    use my_logger_grpc::*;
-    crate::APP_CTX
+    use crate::server::my_logger_grpc::*;
+    crate::server::APP_CTX
         .get_client(env.as_str())
         .await
         .delete_ignore_single_event(DeleteIgnoreSingleEventGrpcRequest { id })

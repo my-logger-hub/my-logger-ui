@@ -1,4 +1,4 @@
-use crate::grpc_client::MyLoggerGrpcClient;
+use crate::server::grpc_client::*;
 
 pub struct GrpcLogSettings(String);
 

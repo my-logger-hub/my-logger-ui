@@ -134,7 +134,7 @@ pub fn LeftPanel() -> Element {
 
 #[server]
 async fn get_server_info(env: String) -> Result<ServerInfoModel, ServerFnError> {
-    match crate::APP_CTX
+    match crate::server::APP_CTX
         .get_client(env.as_str())
         .await
         .get_server_info(())

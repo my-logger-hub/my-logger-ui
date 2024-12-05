@@ -162,9 +162,9 @@ fn load_ignore_events(env: Rc<String>, mut main_state: Signal<MainState>) {
 
 #[server]
 pub async fn get_ignore_events(env: String) -> Result<Vec<IgnoreEventApiModel>, ServerFnError> {
-    use crate::my_logger_grpc::*;
+    use crate::server::my_logger_grpc::*;
 
-    let response: Option<Vec<IgnoreEventGrpcModel>> = crate::APP_CTX
+    let response: Option<Vec<IgnoreEventGrpcModel>> = crate::server::APP_CTX
         .get_client(env.as_str())
         .await
         .get_ignore_events(())
@@ -191,11 +191,11 @@ pub async fn add_ignore_event(
     env: String,
     event: IgnoreEventApiModel,
 ) -> Result<(), ServerFnError> {
-    use crate::my_logger_grpc::*;
+    use crate::server::my_logger_grpc::*;
 
     let level: LogLevelGrpcModel = (&event.level).into();
 
-    crate::APP_CTX
+    crate::server::APP_CTX
         .get_client(env.as_str())
         .await
         .set_ignore_event(IgnoreEventGrpcModel {
@@ -214,11 +214,11 @@ pub async fn delete_ignore_event(
     env: String,
     event: IgnoreEventApiModel,
 ) -> Result<(), ServerFnError> {
-    use crate::my_logger_grpc::*;
+    use crate::server::my_logger_grpc::*;
 
     let level: LogLevelGrpcModel = (&event.level).into();
 
-    crate::APP_CTX
+    crate::server::APP_CTX
         .get_client(env.as_str())
         .await
         .delete_ignore_event(DeleteIgnoreEventGrpcRequest {

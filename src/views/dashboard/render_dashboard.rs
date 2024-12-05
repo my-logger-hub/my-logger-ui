@@ -77,9 +77,9 @@ pub struct HourlyStatisticsHttpModel {
 
 #[server]
 pub async fn get_dashboard(env: String) -> Result<DashboardItem, ServerFnError> {
-    use crate::my_logger_grpc::*;
+    use crate::server::my_logger_grpc::*;
 
-    let client = crate::APP_CTX.get_client(env.as_str()).await;
+    let client = crate::server::APP_CTX.get_client(env.as_str()).await;
 
     let items = client
         .get_hourly_statistics(GetHourlyStatisticsRequest { amount_of_hours: 8 })

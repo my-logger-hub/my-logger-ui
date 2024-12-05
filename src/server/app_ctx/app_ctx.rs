@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{grpc_client::MyLoggerGrpcClient, settings_model::SettingsModel};
+use crate::server::{grpc_client::MyLoggerGrpcClient, settings::SettingsModel};
 use my_settings_reader::SettingsReader;
 use my_ssh::SshSessionsPool;
 use tokio::sync::Mutex;
@@ -34,16 +34,12 @@ impl AppContext {
         let settings = self.settings_reader.get_settings().await;
         let over_ssh_connection = settings.get_env_url(env).await;
 
-        let grpc_client = MyLoggerGrpcClient::new(Arc::new(GrpcLogSettings::new(
-            over_ssh_connection.remote_resource_string,
-        )));
+        let grpc_client =
+            MyLoggerGrpcClient::new(Arc::new(GrpcLogSettings::new(over_ssh_connection)));
 
-        if let Some(value) = over_ssh_connection.ssh_credentials {
-            grpc_client.set_ssh_credentials(Arc::new(value)).await;
-            grpc_client
-                .set_ssh_sessions_pool(self.ssh_sessions_pool.clone())
-                .await;
-        };
+        grpc_client
+            .set_ssh_private_key_resolver(settings.clone())
+            .await;
 
         let grpc_client = Arc::new(grpc_client);
 

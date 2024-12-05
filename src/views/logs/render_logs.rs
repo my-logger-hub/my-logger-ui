@@ -13,9 +13,6 @@ use super::*;
 
 use crate::components::*;
 
-#[cfg(feature = "server")]
-use crate::my_logger_grpc::LogLevelGrpcModel;
-
 #[component]
 pub fn RenderLogs() -> Element {
     use_context_provider(|| Signal::new(SearchPanelState::new()));
@@ -209,8 +206,9 @@ impl LogApiLevel {
 }
 
 #[cfg(feature = "server")]
-impl Into<LogApiLevel> for crate::my_logger_grpc::LogLevelGrpcModel {
+impl Into<LogApiLevel> for crate::server::my_logger_grpc::LogLevelGrpcModel {
     fn into(self) -> LogApiLevel {
+        use crate::server::my_logger_grpc::*;
         match self {
             LogLevelGrpcModel::Info => LogApiLevel::Info,
             LogLevelGrpcModel::Warning => LogApiLevel::Warning,
@@ -222,8 +220,9 @@ impl Into<LogApiLevel> for crate::my_logger_grpc::LogLevelGrpcModel {
 }
 
 #[cfg(feature = "server")]
-impl Into<LogLevelGrpcModel> for LogApiLevel {
-    fn into(self) -> LogLevelGrpcModel {
+impl Into<crate::server::my_logger_grpc::LogLevelGrpcModel> for LogApiLevel {
+    fn into(self) -> crate::server::my_logger_grpc::LogLevelGrpcModel {
+        use crate::server::my_logger_grpc::*;
         match self {
             LogApiLevel::Info => LogLevelGrpcModel::Info,
             LogApiLevel::Warning => LogLevelGrpcModel::Warning,
@@ -322,10 +321,10 @@ pub async fn search_logs(
     to_time: i64,
     phrase: String,
 ) -> Result<Vec<LogApiItem>, ServerFnError> {
-    use crate::my_logger_grpc::*;
+    use crate::server::my_logger_grpc::*;
 
-    let ui_url = crate::APP_CTX.get_ui_url(&env).await;
-    let result = crate::APP_CTX
+    let ui_url = crate::server::APP_CTX.get_ui_url(&env).await;
+    let result = crate::server::APP_CTX
         .get_client(env.as_str())
         .await
         .scan_and_search(ScanAndSearchRequest {
@@ -375,8 +374,7 @@ pub async fn load_logs(
     to_time: i64,
     ctx: Option<Vec<LogEventContextApiModel>>,
 ) -> Result<Vec<LogApiItem>, ServerFnError> {
-    use crate::my_logger_grpc::*;
-
+    use crate::server::my_logger_grpc::*;
     println!("Load logs '{}'-'{}'", from_time, to_time);
 
     let levels = if let Some(level) = level {
@@ -393,11 +391,11 @@ pub async fn load_logs(
 
     let ctx = ctx.unwrap_or_default();
 
-    let result = crate::APP_CTX
+    let result = crate::server::APP_CTX
         .get_client(env.as_str())
         .await
         .read(ReadLogEventRequest {
-            ui_url: crate::APP_CTX.get_ui_url(&env).await,
+            ui_url: crate::server::APP_CTX.get_ui_url(&env).await,
             from_time: from_time,
             to_time: to_time,
             levels,

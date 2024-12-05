@@ -1,4 +1,4 @@
-use crate::my_logger_grpc::*;
+use crate::server::my_logger_grpc::*;
 use crate::LogApiLevel;
 
 impl Into<LogApiLevel> for &'_ LogLevelGrpcModel {
