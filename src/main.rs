@@ -49,22 +49,17 @@ enum Route {
 }
 
 fn main() {
-    let cfg = dioxus::fullstack::Config::new();
-
-    #[cfg(feature = "server")]
-    let cfg = cfg.addr(([0, 0, 0, 0], 9001));
-
-    LaunchBuilder::fullstack().with_cfg(cfg).launch(|| {
-        rsx! {
-            Router::<Route> {}
-        }
-    })
+    dioxus::LaunchBuilder::new()
+        .with_cfg(server_only!(ServeConfig::builder().incremental(
+            IncrementalRendererConfig::default()
+                .invalidate_after(std::time::Duration::from_secs(120)),
+        )))
+        .launch(App)
 }
 
 #[component]
 fn Home() -> Element {
     use_context_provider(|| Signal::new(LocationState::Dashboard));
-
     App()
 }
 

@@ -1,11 +1,12 @@
 use std::collections::{BTreeMap, HashMap};
 
+use my_ssh::ssh_settings::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct SettingsModel {
     pub envs: BTreeMap<String, String>,
-    pub ssh_private_keys: Option<HashMap<String, my_ssh::SshPrivateKeySettingsModel>>,
+    pub ssh_private_keys: Option<HashMap<String, SshPrivateKeySettingsModel>>,
 }
 
 impl SettingsModel {
@@ -22,12 +23,12 @@ impl SettingsModel {
 }
 
 #[async_trait::async_trait]
-impl my_ssh::SshPrivateKeyResolver for SettingsModel {
-    async fn resolve_ssh_private_key(&self, ssh_line: &str) -> Option<my_ssh::SshPrivateKey> {
+impl SshSecurityCredentialsResolver for SettingsModel {
+    async fn resolve_ssh_private_key(&self, ssh_line: &str) -> Option<SshPrivateKey> {
         let private_keys = self.ssh_private_keys.as_ref()?;
 
         if let Some(ssh_credentials) = private_keys.get(ssh_line) {
-            return my_ssh::SshPrivateKey {
+            return SshPrivateKey {
                 content: ssh_credentials.load_cert().await,
                 pass_phrase: ssh_credentials.cert_pass_phrase.clone(),
             }
@@ -35,13 +36,17 @@ impl my_ssh::SshPrivateKeyResolver for SettingsModel {
         }
 
         if let Some(ssh_credentials) = private_keys.get("*") {
-            return my_ssh::SshPrivateKey {
+            return SshPrivateKey {
                 content: ssh_credentials.load_cert().await,
                 pass_phrase: ssh_credentials.cert_pass_phrase.clone(),
             }
             .into();
         }
 
+        None
+    }
+
+    async fn resolve_ssh_password(&self, ssh_line: &str) -> Option<String> {
         None
     }
 }
