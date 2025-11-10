@@ -187,7 +187,7 @@ fn load_from_db(env: Rc<String>, mut main_state: Signal<MainState>) {
     spawn(async move {
                    main_state.write().one_time_ignore_events.set_loading();
         
-        let result = crate::api::one_time_ignore_events::get_one_time_ignore_events(env.to_string()).await;
+        let result = crate::api::one_time_ignore_events::get(env.to_string()).await;
 
         match result{
             Ok(result)=>{

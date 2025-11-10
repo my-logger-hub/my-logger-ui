@@ -1,7 +1,7 @@
 use crate::models::*;
 use dioxus::prelude::*;
 
-#[server]
+#[get("/api/ignore_events&env")]
 pub async fn get_ignore_events(env: String) -> Result<Vec<IgnoreEventApiModel>, ServerFnError> {
     let result: Vec<IgnoreEventApiModel> = crate::server::APP_CTX
         .get_client(env.as_str())
@@ -16,7 +16,7 @@ pub async fn get_ignore_events(env: String) -> Result<Vec<IgnoreEventApiModel>, 
     Ok(result)
 }
 
-#[server]
+#[post("/api/ignore_events/add")]
 pub async fn add_ignore_event(
     env: String,
     event: IgnoreEventApiModel,
@@ -40,7 +40,7 @@ pub async fn add_ignore_event(
     Ok(())
 }
 
-#[server]
+#[post("/api/ignore_events/delete")]
 pub async fn delete_ignore_event(
     env: String,
     event: IgnoreEventApiModel,

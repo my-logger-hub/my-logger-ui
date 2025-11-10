@@ -1,6 +1,7 @@
 use crate::models::*;
 use dioxus::prelude::*;
-#[server]
+
+#[get("/api/logs/search&env&from_time&to_time&phrase")]
 pub async fn search_logs(
     env: String,
     from_time: i64,
@@ -29,7 +30,7 @@ pub async fn search_logs(
     Ok(result)
 }
 
-#[server]
+#[get("/api/logs/load&env&level&from_time&to_time&ctx")]
 pub async fn load_logs(
     env: String,
     level: Option<LogApiLevel>,

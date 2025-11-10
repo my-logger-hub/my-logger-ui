@@ -1,10 +1,8 @@
 use crate::models::*;
 use dioxus::prelude::*;
 
-#[server]
-pub async fn get_one_time_ignore_events(
-    env: String,
-) -> Result<Vec<OneTimeIgnoreHttpModel>, ServerFnError> {
+#[get("/api/one_time_ignore_events&env")]
+pub async fn get(env: String) -> Result<Vec<OneTimeIgnoreHttpModel>, ServerFnError> {
     let response = crate::server::APP_CTX
         .get_client(env.as_str())
         .await
@@ -17,8 +15,7 @@ pub async fn get_one_time_ignore_events(
 
     Ok(response)
 }
-
-#[server]
+#[post("/api/one_time_ignore_events/save")]
 pub async fn save_one_time_ignore_event(
     env: String,
     itm: OneTimeIgnoreHttpModel,
@@ -60,7 +57,7 @@ pub async fn save_one_time_ignore_event(
     Ok(())
 }
 
-#[server]
+#[post("/api/one_time_ignore_events/delete")]
 pub async fn delete_one_time_ignore_event(env: String, id: String) -> Result<(), ServerFnError> {
     use crate::server::my_logger_grpc::*;
     crate::server::APP_CTX
