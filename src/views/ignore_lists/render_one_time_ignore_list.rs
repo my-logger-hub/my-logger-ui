@@ -9,8 +9,6 @@ use components::*;
 
 use crate::models::*;
 
-
-
 #[component]
 pub fn RenderOneTimeIgnoreList() -> Element {
     let mut dialog_state = consume_context::<Signal<DialogState>>();

@@ -20,7 +20,7 @@ pub fn RenderLogsPanel(
     if insight_keys.read().is_none() {
         spawn(async move {
             insight_keys.write().set_loading();
-            let keys = get_insight_keys(env.to_string()).await.unwrap();
+            let keys = crate::api::insights::get(env.to_string()).await.unwrap();
             insight_keys.write().set_value(keys);
         });
     }
@@ -192,16 +192,5 @@ impl SearchType {
             SearchType::Ctx => true,
             SearchType::Text => false,
         }
-    }
-}
-
-#[server]
-pub async fn get_insight_keys(env: String) -> Result<Vec<String>, ServerFnError> {
-    let client = crate::server::APP_CTX.get_client(env.as_str()).await;
-    let response = client.get_insights_keys(()).await;
-
-    match response {
-        Ok(response) => Ok(response.keys),
-        Err(_) => Ok(vec![]),
     }
 }
