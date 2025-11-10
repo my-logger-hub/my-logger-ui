@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::{LocationState, Route, IGNORE_SINGLE_TIME_SUB_PATH};
+use crate::{AppRoute, LocationState, IGNORE_SINGLE_TIME_SUB_PATH};
 #[component]
 pub fn RenderTabs() -> Element {
     let mut location_state = consume_context::<Signal<LocationState>>();
@@ -23,7 +23,9 @@ pub fn RenderTabs() -> Element {
         ul { class: "nav nav-tabs",
             li { class: "nav-item",
                 Link {
-                    to: Route::IgnoreLists { data: vec![] },
+                    to: AppRoute::IgnoreLists {
+                        data: vec![],
+                    },
                     class: "nav-link {ignore_list_active}",
                     onclick: move |_| {
                         location_state.set(LocationState::IgnoreList);
@@ -33,7 +35,7 @@ pub fn RenderTabs() -> Element {
             }
             li { class: "nav-item",
                 Link {
-                    to: Route::IgnoreLists {
+                    to: AppRoute::IgnoreLists {
                         data: vec![IGNORE_SINGLE_TIME_SUB_PATH.to_string()],
                     },
                     class: "nav-link {one_time_ignore_active}",

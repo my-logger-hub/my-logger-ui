@@ -1,4 +1,4 @@
-use crate::LogEventContextApiModel;
+use crate::models::*;
 
 enum SeparatorType {
     SingleChar,

@@ -34,7 +34,7 @@ pub fn EditTimeRangeDialog(
                     oninput: move |e| {
                         let value = e.value().parse::<i32>().unwrap_or(0);
                         time_range_state.write().set_hours_ago(value);
-                    }
+                    },
                 }
             }
         }
@@ -52,7 +52,7 @@ pub fn EditTimeRangeDialog(
                                 value: from.to_local_time(time_zone).to_string(),
                                 oninput: move |e| {
                                     time_range_state.write().set_from_date(e.value(), time_zone);
-                                }
+                                },
                             }
                         }
                         td { " - " }
@@ -63,7 +63,7 @@ pub fn EditTimeRangeDialog(
                                 value: to.to_local_time(time_zone).to_string(),
                                 oninput: move |e| {
                                     time_range_state.write().set_to_date(e.value(), time_zone);
-                                }
+                                },
                             }
                         }
                     }
@@ -84,9 +84,9 @@ pub fn EditTimeRangeDialog(
                     value: value.as_str(),
                     oninput: move |e| {
                         let value = e.value();
-                        dioxus_utils::js::console_log(format!("Log: [{}]", value.as_str()).as_str());
+                        dioxus_utils::console_log(format!("Log: [{}]", value.as_str()).as_str());
                         time_range_state.write().set_exact_hour(e.value(), time_zone);
-                    }
+                    },
                 }
             }
         }
@@ -131,7 +131,7 @@ pub fn EditTimeRangeDialog(
                     },
                     "OK"
                 }
-            }
+            },
         }
     }
 }

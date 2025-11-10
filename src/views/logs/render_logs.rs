@@ -3,7 +3,6 @@ use std::rc::Rc;
 use dioxus::prelude::*;
 
 use rust_extensions::date_time::DateTimeAsMicroseconds;
-use serde::{Deserialize, Serialize};
 
 use crate::{states::*, storage_settings::log_level::SelectedLevel};
 
@@ -13,14 +12,21 @@ use super::*;
 
 use crate::components::*;
 
+use dioxus_utils::*;
+
 #[component]
 pub fn RenderLogs() -> Element {
     use_context_provider(|| Signal::new(SearchPanelState::new()));
 
     let search_panel_state = consume_context::<Signal<SearchPanelState>>();
 
-    let mut main_state = consume_context::<Signal<MainState>>();
+    let main_state = consume_context::<Signal<MainState>>();
+    let main_state_read_access = main_state.read();
 
+    let env = main_state_read_access.get_selected_env();
+    let time_zone = main_state_read_access.get_selected_timezone();
+
+    /*
     let (logs_data, time_zone, env) = {
         let main_state = main_state.read();
         (
@@ -29,6 +35,7 @@ pub fn RenderLogs() -> Element {
             main_state.get_selected_env(),
         )
     };
+     */
 
     let is_ctx_search = {
         let search_panel_state = consume_context::<Signal<SearchPanelState>>();
@@ -43,27 +50,26 @@ pub fn RenderLogs() -> Element {
         RenderLogsPanel {
             env: env.clone(),
             time_zone,
-            on_refresh_click: EventHandler::new(move |v| { load_log_items(env_on_refresh.clone(), v) })
+            on_refresh_click: EventHandler::new(move |v| { load_log_items(env_on_refresh.clone(), v) }),
         }
     };
 
-    let items = match logs_data {
-        DataState::None => {
-            main_state.write().logs_data = DataState::Loading;
+    let items = match main_state_read_access.logs_data.as_ref() {
+        RenderState::None => {
             load_log_items(env.clone(), search_panel_state.read().clone());
             return rsx! {
-                {top_panel},
+                {top_panel}
                 {loading_panel()}
             };
         }
-        DataState::Loading => {
+        RenderState::Loading => {
             return rsx! {
-                {top_panel},
+                {top_panel}
                 {loading_panel()}
             };
         }
-        DataState::Loaded(value) => value,
-        DataState::Error(err) => return rsx! { "Error loading data: {err}" },
+        RenderState::Loaded(value) => value,
+        RenderState::Error(err) => return rsx! { "Error loading data: {err}" },
     };
 
     let items = items.iter().map(|itm| {
@@ -119,7 +125,7 @@ pub fn RenderLogs() -> Element {
     });
 
     rsx! {
-        {top_panel},
+        {top_panel}
         table { class: "table table-striped", style: "margin-top: 61px;",
             tr {
                 th { style: "width: 24px;" }
@@ -141,7 +147,8 @@ fn loading_panel() -> Element {
 
 fn load_log_items(env: Rc<String>, search_panel_state: SearchPanelState) {
     spawn(async move {
-        let main_state = consume_context::<Signal<MainState>>();
+        let mut main_state = consume_context::<Signal<MainState>>();
+        main_state.write().logs_data.set_loading();
         match search_panel_state.search_type {
             SearchType::Ctx => {
                 load(
@@ -164,45 +171,6 @@ fn load_log_items(env: Rc<String>, search_panel_state: SearchPanelState) {
             }
         }
     });
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-pub enum LogApiLevel {
-    Info,
-    Warning,
-    Error,
-    FatalError,
-    Debug,
-}
-
-impl LogApiLevel {
-    pub const ALL_LEVELS: [LogApiLevel; 5] = [
-        LogApiLevel::Info,
-        LogApiLevel::Warning,
-        LogApiLevel::Error,
-        LogApiLevel::FatalError,
-        LogApiLevel::Debug,
-    ];
-    pub fn as_str(&self) -> &str {
-        match self {
-            LogApiLevel::Info => "Info",
-            LogApiLevel::Warning => "Warning",
-            LogApiLevel::Error => "Error",
-            LogApiLevel::FatalError => "Fatal",
-            LogApiLevel::Debug => "Debug",
-        }
-    }
-
-    pub fn from_str(src: &str) -> LogApiLevel {
-        match src {
-            "Info" => LogApiLevel::Info,
-            "Warning" => LogApiLevel::Warning,
-            "Error" => LogApiLevel::Error,
-            "Fatal" => LogApiLevel::FatalError,
-            "Debug" => LogApiLevel::Debug,
-            _ => LogApiLevel::Info,
-        }
-    }
 }
 
 #[cfg(feature = "server")]
@@ -233,22 +201,6 @@ impl Into<crate::server::my_logger_grpc::LogLevelGrpcModel> for LogApiLevel {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct LogApiItem {
-    pub timestamp: i64,
-    pub tenant_id: String,
-    pub process_name: String,
-    pub message: String,
-    pub level: LogApiLevel,
-    pub ctx: Vec<LogEventContextApiModel>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct LogEventContextApiModel {
-    pub key: String,
-    pub value: String,
-}
-
 fn load<'s>(
     env: Rc<String>,
     time_range: &TimeRange,
@@ -256,7 +208,7 @@ fn load<'s>(
     context_keys: Vec<LogEventContextApiModel>,
 ) {
     {
-        main_state.write().logs_data = DataState::Loading;
+        main_state.write().logs_data.set_loading();
     }
 
     let log_level_filter = crate::storage_settings::log_level::get();
@@ -277,16 +229,17 @@ fn load<'s>(
 
     let (from, to) = time_range.get_date_from_date_to();
     spawn(async move {
-        let result = load_logs(env.to_string(), level, from, to, context_keys).await;
+        let result =
+            crate::api::logs::load_logs(env.to_string(), level, from, to, context_keys).await;
 
         match result {
             Ok(result) => {
                 let items: Vec<Rc<LogApiItem>> = result.into_iter().map(Rc::new).collect();
-                main_state.write().logs_data = DataState::Loaded(items);
+                main_state.write().logs_data.set_value(items);
             }
 
             Err(err) => {
-                main_state.write().logs_data = DataState::Error(err.to_string());
+                main_state.write().logs_data.set_error(err.to_string());
             }
         }
     });
@@ -300,143 +253,18 @@ pub fn search_as_text(
 ) {
     let (from, to) = time_range.get_date_from_date_to();
     spawn(async move {
-        let result = search_logs(env.to_string(), from, to, phrase).await;
+        let result = crate::api::logs::search_logs(env.to_string(), from, to, phrase).await;
 
         match result {
             Ok(result) => {
-                main_state.write().logs_data =
-                    DataState::Loaded(result.into_iter().map(Rc::new).collect());
+                main_state
+                    .write()
+                    .logs_data
+                    .set_value(result.into_iter().map(Rc::new).collect());
             }
             Err(err) => {
-                main_state.write().logs_data = DataState::Error(err.to_string());
+                main_state.write().logs_data.set_error(err.to_string());
             }
         }
     });
-}
-
-#[server]
-pub async fn search_logs(
-    env: String,
-    from_time: i64,
-    to_time: i64,
-    phrase: String,
-) -> Result<Vec<LogApiItem>, ServerFnError> {
-    use crate::server::my_logger_grpc::*;
-
-    let ui_url = crate::server::APP_CTX.get_ui_url(&env).await;
-    let result = crate::server::APP_CTX
-        .get_client(env.as_str())
-        .await
-        .scan_and_search(ScanAndSearchRequest {
-            ui_url,
-            from_time: from_time,
-            to_time: to_time,
-            take: 200,
-            phrase,
-        })
-        .await
-        .unwrap();
-
-    let result = match result {
-        Some(result) => result
-            .into_iter()
-            .map(|itm| {
-                let level: LogApiLevel = (&itm.level()).into();
-
-                LogApiItem {
-                    timestamp: itm.timestamp,
-                    tenant_id: itm.tenant_id,
-                    process_name: itm.process_name,
-                    message: itm.message,
-                    level,
-                    ctx: itm
-                        .ctx
-                        .into_iter()
-                        .map(|itm| LogEventContextApiModel {
-                            key: itm.key,
-                            value: itm.value,
-                        })
-                        .collect(),
-                }
-            })
-            .collect(),
-        None => vec![],
-    };
-
-    Ok(result)
-}
-
-#[server]
-pub async fn load_logs(
-    env: String,
-    level: Option<LogApiLevel>,
-    from_time: i64,
-    to_time: i64,
-    ctx: Option<Vec<LogEventContextApiModel>>,
-) -> Result<Vec<LogApiItem>, ServerFnError> {
-    use crate::server::my_logger_grpc::*;
-    println!("Load logs '{}'-'{}'", from_time, to_time);
-
-    let levels = if let Some(level) = level {
-        match level {
-            LogApiLevel::Info => vec![LogLevelGrpcModel::Info as i32],
-            LogApiLevel::Warning => vec![LogLevelGrpcModel::Warning as i32],
-            LogApiLevel::Error => vec![LogLevelGrpcModel::Error as i32],
-            LogApiLevel::FatalError => vec![LogLevelGrpcModel::Fatal as i32],
-            LogApiLevel::Debug => vec![LogLevelGrpcModel::Debug as i32],
-        }
-    } else {
-        vec![]
-    };
-
-    let ctx = ctx.unwrap_or_default();
-
-    let result = crate::server::APP_CTX
-        .get_client(env.as_str())
-        .await
-        .read(ReadLogEventRequest {
-            ui_url: crate::server::APP_CTX.get_ui_url(&env).await,
-            from_time: from_time,
-            to_time: to_time,
-            levels,
-            context_keys: ctx
-                .into_iter()
-                .map(|itm| LogEventContext {
-                    key: itm.key,
-                    value: itm.value,
-                })
-                .collect(),
-            take: 200,
-            skip: 0,
-        })
-        .await
-        .unwrap();
-
-    let result = match result {
-        Some(result) => result
-            .into_iter()
-            .map(|itm| {
-                let level: LogApiLevel = (&itm.level()).into();
-
-                LogApiItem {
-                    timestamp: itm.timestamp,
-                    tenant_id: itm.tenant_id,
-                    process_name: itm.process_name,
-                    message: itm.message,
-                    level,
-                    ctx: itm
-                        .ctx
-                        .into_iter()
-                        .map(|itm| LogEventContextApiModel {
-                            key: itm.key,
-                            value: itm.value,
-                        })
-                        .collect(),
-                }
-            })
-            .collect(),
-        None => vec![],
-    };
-
-    Ok(result)
 }

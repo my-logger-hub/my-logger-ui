@@ -2,11 +2,10 @@ use std::collections::BTreeMap;
 
 use dioxus::prelude::*;
 
-use crate::{models::LogPathDataModel, storage_settings::log_level::SelectedLevel, Route};
+use crate::{models::LogPathDataModel, storage_settings::log_level::SelectedLevel, AppRoute};
 
 use crate::models::*;
 
-use super::HourlyStatisticsHttpModel;
 pub fn render_top_apps_with_errors(
     hourly_statistics: &[HourlyStatisticsHttpModel],
     time_zone: TimeZone,
@@ -87,7 +86,7 @@ pub fn render_top_apps_with_errors(
                         div {
                             "Errors: "
                             Link {
-                                to: Route::Logs {
+                                to: AppRoute::Logs {
                                     data: vec![
                                         LogPathDataModel {
                                             is_ctx_search: true,
@@ -103,7 +102,7 @@ pub fn render_top_apps_with_errors(
                             div { class: "graph-wrapper",
                                 div {
                                     class: "graph-errors",
-                                    style: "width: {err_width}%"
+                                    style: "width: {err_width}%",
                                 }
                             }
                         }
@@ -113,7 +112,7 @@ pub fn render_top_apps_with_errors(
                             "Fatal errors: "
 
                             Link {
-                                to: Route::Logs {
+                                to: AppRoute::Logs {
                                     data: vec![
                                         LogPathDataModel {
                                             is_ctx_search: true,
@@ -129,7 +128,7 @@ pub fn render_top_apps_with_errors(
                             div { class: "graph-wrapper",
                                 div {
                                     class: "graph-fatal-errors",
-                                    style: "width: {fatal_err_width}%"
+                                    style: "width: {fatal_err_width}%",
                                 }
                             }
                         }
@@ -139,7 +138,7 @@ pub fn render_top_apps_with_errors(
                         div {
                             "Warnings: "
                             Link {
-                                to: Route::Logs {
+                                to: AppRoute::Logs {
                                     data: vec![
                                         LogPathDataModel {
                                             is_ctx_search: true,
@@ -155,7 +154,7 @@ pub fn render_top_apps_with_errors(
                             div { class: "graph-wrapper",
                                 div {
                                     class: "graph-fatal-warnings",
-                                    style: "width: {warn_width}%"
+                                    style: "width: {warn_width}%",
                                 }
                             }
                         }

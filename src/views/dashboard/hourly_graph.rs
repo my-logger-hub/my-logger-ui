@@ -3,8 +3,6 @@ use std::collections::BTreeMap;
 
 use crate::models::*;
 
-use super::HourlyStatisticsHttpModel;
-
 pub fn render_hourly_graph(
     hourly_statistics: &[HourlyStatisticsHttpModel],
     time_zone: TimeZone,

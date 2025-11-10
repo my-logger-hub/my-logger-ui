@@ -4,7 +4,7 @@ use dioxus::prelude::*;
 
 use crate::{
     dialogs::DialogState, models::LogPathDataModel, storage_settings::log_level::SelectedLevel,
-    views::logs::SelectLogLevel, DataState, MainState, Route,
+    views::logs::SelectLogLevel, *,
 };
 
 use crate::models::*;
@@ -15,13 +15,13 @@ pub fn RenderLogsPanel(
     time_zone: TimeZone,
     on_refresh_click: EventHandler<SearchPanelState>,
 ) -> Element {
-    let mut insight_keys: Signal<DataState<Vec<String>>> = use_signal(|| DataState::None);
+    let mut insight_keys: Signal<DataState<Vec<String>>> = use_signal(|| DataState::default());
 
     if insight_keys.read().is_none() {
-        insight_keys.set(DataState::Loading);
         spawn(async move {
+            insight_keys.write().set_loading();
             let keys = get_insight_keys(env.to_string()).await.unwrap();
-            insight_keys.set(DataState::Loaded(keys));
+            insight_keys.write().set_value(keys);
         });
     }
 
@@ -66,7 +66,7 @@ pub fn RenderLogsPanel(
                         on_change: move |level: SelectedLevel| {
                             search_panel_state.write().log_level = level.clone();
                             crate::storage_settings::log_level::set(level);
-                        }
+                        },
                     }
                 }
                 td { style: "width: 260px;",
@@ -88,7 +88,7 @@ pub fn RenderLogsPanel(
                                         search_panel_state.write().time_range = time_range;
                                     }),
                                 });
-                        }
+                        },
                     }
                 }
 
@@ -116,7 +116,7 @@ pub fn RenderLogsPanel(
                         value: "{search_panel_state_read_access.filter.as_str()}",
                         oninput: move |e| {
                             search_panel_state.write().filter = e.value();
-                        }
+                        },
                     }
 
                     div { id: "insights-panel" }
@@ -124,20 +124,20 @@ pub fn RenderLogsPanel(
                 td { style: "width: 32px;vertical-align: bottom;",
                     Link {
                         class: "btn btn-primary btn-sm",
-                        to: Route::Logs {
+                        to: AppRoute::Logs {
                             data: vec![second_path],
                         },
                         onclick: move |_| {
                             let search_panel = {
                                 let mut main_state = consume_context::<Signal<MainState>>();
-                                main_state.write().logs_data = DataState::None;
+                                main_state.write().logs_data.reset();
                                 search_panel_state.read().clone()
                             };
                             on_refresh_click.call(search_panel);
                         },
                         img {
                             src: "/img/ico-refresh.svg",
-                            style: "width: 16px;"
+                            style: "width: 16px;",
                         }
                     }
                 }

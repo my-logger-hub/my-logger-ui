@@ -1,7 +1,9 @@
-use crate::{dialogs::DialogTemplate, IgnoreEventApiModel, LogApiLevel};
+use crate::dialogs::DialogTemplate;
 use dioxus::prelude::*;
 
 use super::DialogState;
+
+use crate::models::*;
 
 #[component]
 pub fn RenderAddIgnoreEvent(on_ok: EventHandler<IgnoreEventApiModel>) -> Element {
@@ -37,7 +39,7 @@ pub fn RenderAddIgnoreEvent(on_ok: EventHandler<IgnoreEventApiModel>) -> Element
                         value: state.read().application.as_str(),
                         oninput: move |e| {
                             state.write().application = e.value();
-                        }
+                        },
                     }
                 }
 
@@ -48,7 +50,7 @@ pub fn RenderAddIgnoreEvent(on_ok: EventHandler<IgnoreEventApiModel>) -> Element
                         value: state.read().marker.as_str(),
                         oninput: move |e| {
                             state.write().marker = e.value();
-                        }
+                        },
                     }
                 }
             },
@@ -62,7 +64,7 @@ pub fn RenderAddIgnoreEvent(on_ok: EventHandler<IgnoreEventApiModel>) -> Element
                     },
                     "Add"
                 }
-            }
+            },
         }
     }
 }

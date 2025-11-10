@@ -1,16 +1,12 @@
 use std::rc::Rc;
 
-use dioxus_utils::js::WebLocalStorage;
+use dioxus_utils::{js::WebLocalStorage, DataState};
 
-use crate::{
-    storage_settings::selected_time_zone::SelectedTimeZone, DashboardItem, IgnoreEventApiModel,
-    LogApiItem, OneTimeIgnoreHttpModel,
-};
+use crate::storage_settings::selected_time_zone::SelectedTimeZone;
 
 use crate::models::*;
 
 pub const ENV_LOCAL_STORAGE_KEY: &str = "env";
-use super::DataState;
 
 pub struct MainState {
     pub storage: WebLocalStorage,
@@ -20,26 +16,32 @@ pub struct MainState {
     pub ignore_events: DataState<Vec<Rc<IgnoreEventApiModel>>>,
     pub one_time_ignore_events: DataState<Vec<Rc<OneTimeIgnoreHttpModel>>>,
     pub selected_time_zone: SelectedTimeZone,
-    pub server_settings: DataState<Rc<ServerInfoModel>>,
+    pub server_settings: DataState<Rc<ServerInfoHttpModel>>,
     time_zone: TimeZone,
 }
 
-impl MainState {
-    pub fn new() -> Self {
+impl Default for MainState {
+    fn default() -> Self {
         let storage = dioxus_utils::js::GlobalAppSettings::get_local_storage();
 
         let selected_time_zone = crate::storage_settings::selected_time_zone::get();
         Self {
             envs: None,
-            logs_data: DataState::None,
-            dashboard_data: DataState::None,
-            ignore_events: DataState::None,
-            one_time_ignore_events: DataState::None,
-            server_settings: DataState::None,
+            logs_data: DataState::default(),
+            dashboard_data: DataState::default(),
+            ignore_events: DataState::default(),
+            one_time_ignore_events: DataState::default(),
+            server_settings: DataState::default(),
             storage,
             time_zone: TimeZone::default(),
             selected_time_zone,
         }
+    }
+}
+
+impl MainState {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn has_envs(&self) -> bool {
@@ -67,7 +69,7 @@ impl MainState {
     pub fn active_env_changed(&mut self, value: &str) {
         dioxus_utils::js::GlobalAppSettings::get_local_storage().set(ENV_LOCAL_STORAGE_KEY, value);
         self.reset_data();
-        self.server_settings = DataState::None;
+        self.server_settings.reset();
     }
 
     pub fn get_selected_env(&self) -> Rc<String> {
@@ -83,9 +85,9 @@ impl MainState {
     }
 
     pub fn reset_data(&mut self) {
-        self.logs_data = DataState::None;
-        self.dashboard_data = DataState::None;
-        self.ignore_events = DataState::None;
-        self.one_time_ignore_events = DataState::None;
+        self.logs_data.reset();
+        self.dashboard_data.reset();
+        self.ignore_events.reset();
+        self.one_time_ignore_events.reset();
     }
 }

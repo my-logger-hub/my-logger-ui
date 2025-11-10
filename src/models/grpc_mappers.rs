@@ -1,5 +1,5 @@
+use crate::models::*;
 use crate::server::my_logger_grpc::*;
-use crate::LogApiLevel;
 
 impl Into<LogApiLevel> for &'_ LogLevelGrpcModel {
     fn into(self) -> LogApiLevel {

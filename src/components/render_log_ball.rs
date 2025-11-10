@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::LogApiLevel;
+use crate::models::*;
 
 pub fn render_log_ball(level: LogApiLevel) -> Element {
     let style = match level {

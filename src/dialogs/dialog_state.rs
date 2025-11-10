@@ -2,8 +2,6 @@ use std::rc::Rc;
 
 use dioxus::prelude::EventHandler;
 
-use crate::{IgnoreEventApiModel, OneTimeIgnoreHttpModel};
-
 use crate::models::*;
 
 #[derive(Clone)]

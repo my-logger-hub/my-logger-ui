@@ -2,7 +2,9 @@ use std::rc::Rc;
 
 use dioxus::prelude::*;
 
-use crate::{models::ServerInfoModel, DataState, LocationState, MainState};
+use crate::{LocationState, MainState};
+
+use dioxus_utils::*;
 
 const CLASS_NAME: &str = "menu-item-active";
 #[component]
@@ -39,6 +41,8 @@ pub fn LeftPanel() -> Element {
         }
     }
     let mut main_state = consume_context::<Signal<MainState>>();
+    let main_state_read_access = main_state.read();
+    /*
     let (time_zone, server_settings, env) = {
         let read_access = main_state.read();
         (
@@ -47,35 +51,46 @@ pub fn LeftPanel() -> Element {
             read_access.get_selected_env(),
         )
     };
+     */
 
-    let server_settings = match server_settings {
-        DataState::None => {
-            main_state.write().server_settings = DataState::Loading;
-
+    let server_settings = match main_state_read_access.server_settings.as_ref() {
+        RenderState::None => {
+            let selected_env = main_state_read_access.get_selected_env();
             spawn(async move {
-                let result = get_server_info(env.to_string()).await;
+                main_state.write().server_settings.set_loading();
+                let result =
+                    crate::api::server_info::get_server_info(selected_env.to_string()).await;
 
                 match result {
                     Ok(result) => {
-                        main_state.write().server_settings = DataState::Loaded(Rc::new(result));
+                        main_state
+                            .write()
+                            .server_settings
+                            .set_value(Rc::new(result));
                     }
                     Err(err) => {
-                        main_state.write().server_settings = DataState::Error(err.to_string());
+                        main_state
+                            .write()
+                            .server_settings
+                            .set_error(err.to_string());
                     }
                 }
             });
 
             None
         }
-        DataState::Loading => None,
+        RenderState::Loading => None,
 
-        DataState::Loaded(value) => Some(value),
-        DataState::Error(err) => {
+        RenderState::Loaded(value) => Some(value),
+        RenderState::Error(err) => {
             return rsx! { "Error loading from server: {err}" };
         }
     };
 
-    let time_zone = format!("TimeZone: {}", time_zone.to_string());
+    let time_zone = format!(
+        "TimeZone: {}",
+        main_state_read_access.get_selected_timezone().to_string()
+    );
 
     let client_version = env!("CARGO_PKG_VERSION");
     let client_version = rsx! {
@@ -91,7 +106,7 @@ pub fn LeftPanel() -> Element {
                 let gc_timeout = format_hours_to_gc(server_settings.hours_to_gc);
 
                 rsx! {
-                    {client_version},
+                    {client_version}
                     div { "Server ver: {server_settings.version.as_str()}" }
                     div { "GC: {gc_timeout.as_str()}" }
                 }
@@ -129,25 +144,6 @@ pub fn LeftPanel() -> Element {
         Link { class: "menu-item {settings_active}", to: "/settings", "Settings" }
 
         div { class: "server-info", {server_info} }
-    }
-}
-
-#[server]
-async fn get_server_info(env: String) -> Result<ServerInfoModel, ServerFnError> {
-    match crate::server::APP_CTX
-        .get_client(env.as_str())
-        .await
-        .get_server_info(())
-        .await
-    {
-        Ok(result) => Ok(ServerInfoModel {
-            version: result.version,
-            hours_to_gc: result.hours_to_gc,
-        }),
-        Err(_) => Ok(ServerInfoModel {
-            version: String::new(),
-            hours_to_gc: 0,
-        }),
     }
 }
 

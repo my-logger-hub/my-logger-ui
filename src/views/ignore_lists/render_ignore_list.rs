@@ -1,29 +1,26 @@
 use std::rc::Rc;
 
 use dioxus::prelude::*;
-use serde::*;
 
 use crate::components::*;
-use crate::{dialogs::DialogState, DataState, LogApiLevel, MainState};
+
+use crate::{dialogs::DialogState, MainState};
+
+use dioxus_utils::*;
+
 
 #[component]
 pub fn RenderIgnoreList() -> Element {
     let mut dialog_state = consume_context::<Signal<DialogState>>();
 
     let mut main_state = consume_context::<Signal<MainState>>();
+    let main_state_read_access = main_state.read();
 
-    let (env, data) = {
-        let main_state_read_access = main_state.read();
+    let env = main_state_read_access.get_selected_env();
 
-        let env = main_state_read_access.get_selected_env();
-        let data = main_state_read_access.ignore_events.clone();
-
-        (env, data)
-    };
-
-    let value = match data {
-        DataState::None => {
-            main_state.write().ignore_events = DataState::Loading;
+    let value = match main_state_read_access.ignore_events.as_ref() {
+        RenderState::None => {
+  
             load_ignore_events(env.clone(), main_state);
 
             return rsx! {
@@ -31,14 +28,14 @@ pub fn RenderIgnoreList() -> Element {
             };
         }
 
-        DataState::Loading => {
+        RenderState::Loading => {
             return rsx! {
                 h1 { "Loading.." }
             };
         }
 
-        DataState::Loaded(value) => value,
-        DataState::Error(err) => return rsx! { "Error loading data: {err}" },
+        RenderState::Loaded(value) => value,
+        RenderState::Error(err) => return rsx! { "Error loading data: {err}" },
     };
 
     let table_content = value.into_iter().map(|itm| {
@@ -77,7 +74,7 @@ pub fn RenderIgnoreList() -> Element {
                                         let env = env_delete.clone();
                                         let itm_to_delete = itm_to_delete.clone();
                                         spawn(async move {
-                                            let _ = delete_ignore_event(
+                                            let _ = crate::api::ignore_events::delete_ignore_event(
                                                     env.to_string(),
                                                     itm_to_delete.as_ref().clone(),
                                                 )
@@ -116,7 +113,11 @@ pub fn RenderIgnoreList() -> Element {
                                             spawn(async move {
                                                 let env = env.clone();
                                                 spawn(async move {
-                                                    let _ = add_ignore_event(env.to_string(), itm).await;
+                                                    let _ = crate::api::ignore_events::add_ignore_event(
+                                                            env.to_string(),
+                                                            itm,
+                                                        )
+                                                        .await;
                                                     main_state.write().reset_data();
                                                     dialog_state.set(DialogState::None);
                                                 });
@@ -136,98 +137,22 @@ pub fn RenderIgnoreList() -> Element {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct IgnoreEventApiModel {
-    pub level: LogApiLevel,
-    pub application: String,
-    pub marker: String,
-}
 
 fn load_ignore_events(env: Rc<String>, mut main_state: Signal<MainState>) {
     spawn(async move {
-        let result = get_ignore_events(env.to_string()).await;
+        main_state.write().ignore_events.set_loading();
+        let result = crate::api::ignore_events::get_ignore_events(env.to_string()).await;
 
         match result{
             Ok(result) => {
                 let result = result.into_iter().map(|itm| Rc::new(itm)).collect();
-                main_state.write().ignore_events = DataState::Loaded(result);
+                main_state.write().ignore_events.set_loaded(result);
             }
             Err(err) => {
-                main_state.write().ignore_events = DataState::Error(err.to_string());
+                main_state.write().ignore_events.set_error(err.to_string());
             }
         }
 
     });
 }
 
-#[server]
-pub async fn get_ignore_events(env: String) -> Result<Vec<IgnoreEventApiModel>, ServerFnError> {
-    use crate::server::my_logger_grpc::*;
-
-    let response: Option<Vec<IgnoreEventGrpcModel>> = crate::server::APP_CTX
-        .get_client(env.as_str())
-        .await
-        .get_ignore_events(())
-        .await
-        .unwrap();
-
-    let result = match response {
-        Some(response) => response
-            .into_iter()
-            .map(|itm: IgnoreEventGrpcModel| IgnoreEventApiModel {
-                level: (&itm.level()).into(),
-                application: itm.application,
-                marker: itm.marker,
-            })
-            .collect(),
-        None => vec![],
-    };
-
-    Ok(result)
-}
-
-#[server]
-pub async fn add_ignore_event(
-    env: String,
-    event: IgnoreEventApiModel,
-) -> Result<(), ServerFnError> {
-    use crate::server::my_logger_grpc::*;
-
-    let level: LogLevelGrpcModel = (&event.level).into();
-
-    crate::server::APP_CTX
-        .get_client(env.as_str())
-        .await
-        .set_ignore_event(IgnoreEventGrpcModel {
-            level: level as i32,
-            application: event.application,
-            marker: event.marker,
-        })
-        .await
-        .unwrap();
-
-    Ok(())
-}
-
-#[server]
-pub async fn delete_ignore_event(
-    env: String,
-    event: IgnoreEventApiModel,
-) -> Result<(), ServerFnError> {
-    use crate::server::my_logger_grpc::*;
-
-    let level: LogLevelGrpcModel = (&event.level).into();
-
-    crate::server::APP_CTX
-        .get_client(env.as_str())
-        .await
-        .delete_ignore_event(DeleteIgnoreEventGrpcRequest {
-            level: level as i32,
-            application: event.application,
-            marker: event.marker,
-        })
-        .await
-        .unwrap();
-
-    Ok(())
-}

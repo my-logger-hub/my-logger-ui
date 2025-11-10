@@ -1,6 +1,6 @@
 use dioxus::prelude::*;
 
-use crate::{states::*, Route};
+use crate::{states::*, AppRoute};
 
 #[component]
 pub fn EnvsSelector() -> Element {
@@ -14,11 +14,11 @@ pub fn EnvsSelector() -> Element {
         envs.clone().into_iter().map(|env| {
             if selected_env.as_str() == env.as_str() {
                 rsx! {
-                    option { selected: true, {env.as_str() } }
+                    option { selected: true, {env.as_str()} }
                 }
             } else {
                 rsx! {
-                    option { {env.as_str() } }
+                    option { {env.as_str()} }
                 }
             }
         })
@@ -41,7 +41,7 @@ pub fn EnvsSelector() -> Element {
                     .write()
                     .active_env_changed(value.as_str());
                 navigator()
-                    .push(Route::Dashboard {
+                    .push(AppRoute::Dashboard {
                         env_name: value,
                     });
             },

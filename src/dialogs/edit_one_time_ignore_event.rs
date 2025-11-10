@@ -2,7 +2,9 @@ use std::rc::Rc;
 
 use dioxus::prelude::*;
 
-use crate::{components::*, dialogs::DialogTemplate, LogApiLevel, OneTimeIgnoreHttpModel};
+use crate::{components::*, dialogs::DialogTemplate};
+
+use crate::models::*;
 
 use super::DialogState;
 
@@ -31,7 +33,7 @@ pub fn EditOneTimeIgnoreDialog(
                                     itm.1 = v;
                                 }
                             }
-                        }
+                        },
                     }
                 }
                 td { {itm.0.as_str()} }
@@ -60,7 +62,7 @@ pub fn EditOneTimeIgnoreDialog(
                                 on_input: move |v| {
                                     state.write().message_match = v;
                                 },
-                                on_enter_pressed: None
+                                on_enter_pressed: None,
                             }
                             InputI64 {
                                 caption: "Minutes to wait",
@@ -69,7 +71,7 @@ pub fn EditOneTimeIgnoreDialog(
                                     if let InputValue::Value(v) = v {
                                         state.write().minutes_to_wait = v;
                                     }
-                                }
+                                },
                             }
                             InputI64 {
                                 caption: "Skip amount",
@@ -78,7 +80,7 @@ pub fn EditOneTimeIgnoreDialog(
                                     if let InputValue::Value(v) = v {
                                         state.write().skip_amount = v;
                                     }
-                                }
+                                },
                             }
                         }
                     }
@@ -91,7 +93,7 @@ pub fn EditOneTimeIgnoreDialog(
                             value: state_read_access.current_key.as_str(),
                             on_input: move |v| {
                                 state.write().current_key = v;
-                            }
+                            },
                         }
                     }
                     td {
@@ -100,7 +102,7 @@ pub fn EditOneTimeIgnoreDialog(
                             value: state_read_access.current_value.as_str(),
                             on_input: move |v| {
                                 state.write().current_value = v;
-                            }
+                            },
                         }
                     }
                     td { style: "vertical-align: middle;",
@@ -133,7 +135,7 @@ pub fn EditOneTimeIgnoreDialog(
                     disabled: btn_disabled,
                     "OK"
                 }
-            }
+            },
         }
     }
 }

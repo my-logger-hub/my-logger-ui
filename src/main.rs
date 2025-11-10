@@ -2,20 +2,17 @@
 
 mod states;
 
+mod api;
 mod js_bridge;
-
 mod models;
 #[cfg(feature = "server")]
 mod server;
 
-use crate::{
-    dialogs::{DialogState, RenderDialog},
-    states::*,
-    views::*,
-};
+use crate::{dialogs::*, states::*, views::*};
 
 use dioxus::prelude::*;
 
+use dioxus_utils::*;
 mod components;
 
 mod insights;
@@ -31,7 +28,7 @@ const IGNORE_SINGLE_TIME_SUB_PATH: &str = "ignore-single-time";
 // let cfg = dioxus::fullstack::Config::new().addr(([0, 0, 0, 0], 8080));
 
 #[derive(Routable, PartialEq, Clone)]
-enum Route {
+enum AppRoute {
     #[route("/")]
     Home {},
 
@@ -51,10 +48,15 @@ enum Route {
 fn main() {
     dioxus::LaunchBuilder::new()
         .with_cfg(server_only!(ServeConfig::builder().incremental(
-            IncrementalRendererConfig::default()
+            dioxus_server::IncrementalRendererConfig::default()
                 .invalidate_after(std::time::Duration::from_secs(120)),
         )))
-        .launch(App)
+        .launch(|| {
+            rsx! {
+                document::Link { rel: "icon", href: asset!("/public/favicon.ico") }
+                Router::<AppRoute> {}
+            }
+        })
 }
 
 #[component]
@@ -88,35 +90,35 @@ fn Logs(data: Vec<String>) -> Element {
 fn Dashboard(env_name: String) -> Element {
     use_context_provider(|| Signal::new(LocationState::Dashboard));
 
-    let mut envs_to_load_state = use_signal(|| DataState::None);
+    let mut envs_to_load_state = use_signal(|| DataState::default());
 
-    let envs_to_load_data = { envs_to_load_state.read().clone() };
+    let cs_ra = envs_to_load_state.read();
 
-    let envs = match envs_to_load_data {
-        DataState::None => {
-            envs_to_load_state.set(DataState::Loading);
+    let envs = match cs_ra.as_ref() {
+        RenderState::None => {
             let origin = dioxus_utils::js::GlobalAppSettings::new()
                 .get_origin()
                 .to_string();
             spawn(async move {
-                let result = get_envs(origin).await;
+                envs_to_load_state.write().set_loading();
+                let result = crate::api::server_info::get_envs(origin).await;
 
                 match result {
                     Ok(result) => {
-                        envs_to_load_state.set(DataState::Loaded(result));
+                        envs_to_load_state.write().set_loaded(result);
                     }
                     Err(err) => {
-                        envs_to_load_state.set(DataState::Error(err.to_string()));
+                        envs_to_load_state.write().set_error(err.to_string());
                     }
                 }
             });
             return rsx! { "[0]Loading envs..." };
         }
-        DataState::Loading => return rsx! { "[1]Loading envs..." },
+        RenderState::Loading => return rsx! { "[1]Loading envs..." },
 
-        DataState::Loaded(envs) => envs,
+        RenderState::Loaded(envs) => envs,
 
-        DataState::Error(err) => {
+        RenderState::Error(err) => {
             let err = format!("Error loading envs: {}", err);
             return rsx! {
                 {err}
@@ -175,7 +177,7 @@ fn App() -> Element {
             .get_origin()
             .to_string();
 
-        get_envs(origin)
+        crate::api::server_info::get_envs(origin)
     });
 
     let data = resource.read_unchecked();
@@ -241,25 +243,4 @@ fn ActiveApp() -> Element {
         div { id: "main-panel", {right_panel} }
         RenderDialog {}
     }
-}
-
-#[server]
-pub async fn get_envs(ui_url: String) -> Result<Vec<String>, ServerFnError> {
-    let mut ui_url = ui_url;
-    if ui_url.starts_with("https") {
-        if ui_url.ends_with("/") {
-            ui_url.push_str("dashboard/");
-        } else {
-            ui_url.push_str("/dashboard/");
-        }
-        crate::server::APP_CTX.set_ui_url(ui_url).await;
-    }
-
-    let result = crate::server::APP_CTX
-        .settings_reader
-        .get_settings()
-        .await
-        .get_envs();
-
-    Ok(result)
 }
