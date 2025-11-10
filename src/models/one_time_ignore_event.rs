@@ -17,7 +17,7 @@ pub struct OneTimeIgnoreHttpModel {
 impl Default for OneTimeIgnoreHttpModel {
     fn default() -> Self {
         Self {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: dioxus_utils::generate_uuid(),
             levels: vec![],
             message_match: "".to_string(),
             ctx_match: None,
