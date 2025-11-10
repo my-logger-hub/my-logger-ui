@@ -27,7 +27,7 @@ jobs:
         run: sed -i -e 's/^version = .*/version = "${{ steps.get_version.outputs.VERSION }}"/' Cargo.toml
 
       - run: |
-          dx build --platform web --release
+          dx bundle --web --release
           ls ./target/dx/${APP_NAME}/release/web
           python3 build.py ./target/dx/${APP_NAME}/release/web/public/index.html
 
