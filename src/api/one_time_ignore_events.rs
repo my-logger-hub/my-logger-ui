@@ -1,7 +1,7 @@
 use crate::models::*;
 use dioxus::prelude::*;
 
-#[get("/api/one_time_ignore_events&env")]
+#[get("/api/one_time_ignore_events?env")]
 pub async fn get(env: String) -> Result<Vec<OneTimeIgnoreHttpModel>, ServerFnError> {
     let response = crate::server::APP_CTX
         .get_client(env.as_str())
