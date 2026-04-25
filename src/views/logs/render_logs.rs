@@ -18,7 +18,13 @@ use dioxus_utils::*;
 pub fn RenderLogs() -> Element {
     use_context_provider(|| Signal::new(SearchPanelState::new()));
 
-    let search_panel_state = consume_context::<Signal<SearchPanelState>>();
+    let mut search_panel_state = consume_context::<Signal<SearchPanelState>>();
+
+    use_effect(move || {
+        if !search_panel_state.peek().matches_storage() {
+            search_panel_state.write().load_from_storage();
+        }
+    });
 
     let main_state = consume_context::<Signal<MainState>>();
     let main_state_read_access = main_state.read();
@@ -38,7 +44,6 @@ pub fn RenderLogs() -> Element {
      */
 
     let is_ctx_search = {
-        let search_panel_state = consume_context::<Signal<SearchPanelState>>();
         let search_panel_state_read_access = search_panel_state.read();
         search_panel_state_read_access.search_type.is_ctx_search()
     };
@@ -56,7 +61,10 @@ pub fn RenderLogs() -> Element {
 
     let items = match main_state_read_access.logs_data.as_ref() {
         RenderState::None => {
-            load_log_items(env.clone(), search_panel_state.read().clone());
+            let sp = search_panel_state.read();
+            if sp.initialized {
+                load_log_items(env.clone(), sp.clone());
+            }
             return rsx! {
                 {top_panel}
                 {loading_panel()}

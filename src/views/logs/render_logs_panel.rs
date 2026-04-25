@@ -124,18 +124,7 @@ pub fn RenderLogsPanel(
                                     main_state.write().logs_data.reset();
                                     search_panel_state.read().clone()
                                 };
-                                let second_path = LogPathDataModel {
-                                    is_ctx_search: search_panel.search_type.is_ctx_search(),
-                                    search_string: search_panel.filter.clone(),
-                                    level: crate::storage_settings::log_level::get().into(),
-                                    time_range: search_panel.time_range.to_string(time_zone),
-                                }
-                                    .to_base_64();
                                 on_refresh_click.call(search_panel);
-                                navigator()
-                                    .push(AppRoute::Logs {
-                                        data: vec![second_path],
-                                    });
                             }
                         },
                     }
@@ -173,21 +162,50 @@ pub struct SearchPanelState {
     pub filter: String,
     pub time_range: TimeRange,
     pub search_type: SearchType,
+    pub initialized: bool,
 }
 
 impl SearchPanelState {
     pub fn new() -> Self {
+        Self {
+            search_type: SearchType::Ctx,
+            log_level: SelectedLevel::All,
+            filter: String::new(),
+            time_range: TimeRange::default(),
+            initialized: false,
+        }
+    }
+
+    pub fn read_storage() -> (SearchType, SelectedLevel, String, TimeRange) {
         let search_type = if crate::storage_settings::ctx_search::get() {
             SearchType::Ctx
         } else {
             SearchType::Text
         };
-        Self {
-            search_type,
-            log_level: crate::storage_settings::log_level::get(),
-            filter: crate::storage_settings::search_line::get(),
-            time_range: crate::storage_settings::time_range::get(),
+        let log_level = crate::storage_settings::log_level::get();
+        let filter = crate::storage_settings::search_line::get();
+        let time_range = crate::storage_settings::time_range::get();
+        (search_type, log_level, filter, time_range)
+    }
+
+    pub fn matches_storage(&self) -> bool {
+        if !self.initialized {
+            return false;
         }
+        let (search_type, log_level, filter, time_range) = Self::read_storage();
+        self.search_type == search_type
+            && self.log_level == log_level
+            && self.filter == filter
+            && self.time_range == time_range
+    }
+
+    pub fn load_from_storage(&mut self) {
+        let (search_type, log_level, filter, time_range) = Self::read_storage();
+        self.search_type = search_type;
+        self.log_level = log_level;
+        self.filter = filter;
+        self.time_range = time_range;
+        self.initialized = true;
     }
 
     pub fn append_filter_conditions(&mut self, key: &str, value: &str) {
