@@ -117,6 +117,27 @@ pub fn RenderLogsPanel(
                         oninput: move |e| {
                             search_panel_state.write().filter = e.value();
                         },
+                        onkeyup: move |e| {
+                            if e.key() == Key::Enter {
+                                let search_panel = {
+                                    let mut main_state = consume_context::<Signal<MainState>>();
+                                    main_state.write().logs_data.reset();
+                                    search_panel_state.read().clone()
+                                };
+                                let second_path = LogPathDataModel {
+                                    is_ctx_search: search_panel.search_type.is_ctx_search(),
+                                    search_string: search_panel.filter.clone(),
+                                    level: crate::storage_settings::log_level::get().into(),
+                                    time_range: search_panel.time_range.to_string(time_zone),
+                                }
+                                    .to_base_64();
+                                on_refresh_click.call(search_panel);
+                                navigator()
+                                    .push(AppRoute::Logs {
+                                        data: vec![second_path],
+                                    });
+                            }
+                        },
                     }
 
                     div { id: "insights-panel" }
@@ -136,7 +157,7 @@ pub fn RenderLogsPanel(
                             on_refresh_click.call(search_panel);
                         },
                         img {
-                            src: "/img/ico-refresh.svg",
+                            src: "/assets/img/ico-refresh.svg",
                             style: "width: 16px;",
                         }
                     }
