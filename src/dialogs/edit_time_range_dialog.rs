@@ -154,7 +154,7 @@ struct TimeRangeState {
 
 impl TimeRangeState {
     pub fn from(src_value: TimeRange) -> Self {
-        let now = dioxus_utils::js::now_date_time();
+        let now = dioxus_utils::now_date_time();
 
         match src_value {
             TimeRange::HoursAgo(v) => {
