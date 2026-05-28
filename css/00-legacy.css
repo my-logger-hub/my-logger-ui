@@ -3,6 +3,12 @@
    Remove rules from here as each view is ported to ml-* classes.
    ============================================================ */
 
+/* legacy layout vars still used by the not-yet-migrated Logs search panel */
+:root {
+    --app-width: 100vw;
+    --app-height: 100vh;
+}
+
 .menu {
     color: white;
     padding: 10px;

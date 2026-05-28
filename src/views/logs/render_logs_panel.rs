@@ -57,7 +57,7 @@ pub fn RenderLogsPanel(
 
     rsx! {
 
-        table { style: "width: calc(var(--app-width) - var(--panel-width)); border-bottom: 1px lightgray solid; box-shadow: 0 0 5px lightgray; position: fixed; background:white",
+        table { style: "width: 100%; border-bottom: 1px lightgray solid; box-shadow: 0 0 5px lightgray; background: white;",
             tr {
                 td { style: "width: 150px;",
                     div { style: "margin-top: 5px;", "Level" }

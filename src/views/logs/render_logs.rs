@@ -134,7 +134,7 @@ pub fn RenderLogs() -> Element {
 
     rsx! {
         {top_panel}
-        table { class: "table table-striped", style: "margin-top: 61px;",
+        table { class: "table table-striped",
             tr {
                 th { style: "width: 24px;" }
                 th { "Time" }
@@ -149,7 +149,7 @@ pub fn RenderLogs() -> Element {
 
 fn loading_panel() -> Element {
     rsx! {
-        h1 { style: "margin-top:50px;", "Loading..." }
+        h1 { "Loading..." }
     }
 }
 
