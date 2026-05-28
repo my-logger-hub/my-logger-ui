@@ -30,8 +30,7 @@ pub fn EnvsSelector() -> Element {
 
     rsx! {
         select {
-            class: "form-select",
-            style: "background-color: white;",
+            class: "ml-side__envselect",
 
             value: selected_env.as_str(),
 

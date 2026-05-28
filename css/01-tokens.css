@@ -1,0 +1,158 @@
+/* ============================================================
+   my-logger-ui — design system
+   Prefix: .ml-*    Vars: --ml-*  (light + dark themes)
+   ============================================================ */
+
+/* ---------- 1. Tokens ---------- */
+:root,
+[data-theme="light"] {
+  /* surfaces */
+  --ml-bg:           #ffffff;
+  --ml-bg-sub:       #f6f7f9;
+  --ml-bg-row-alt:   #fafbfc;
+  --ml-surface:      #ffffff;
+  --ml-surface-2:    #f1f3f6;
+  --ml-overlay:      rgba(20, 22, 28, 0.42);
+
+  /* borders */
+  --ml-border:       #e3e5ea;
+  --ml-border-strong:#c9ccd3;
+  --ml-border-soft:  #ecedf0;
+
+  /* text */
+  --ml-fg:           #14161d;
+  --ml-fg-2:         #3a3f4a;
+  --ml-fg-mute:      #6b7280;
+  --ml-fg-faint:     #9aa0aa;
+  --ml-link:         #2d63d6;
+
+  /* accent (datadog-ish indigo/purple) */
+  --ml-accent:       #6b3fa0;
+  --ml-accent-2:     #8a5cbf;
+  --ml-accent-soft:  #efe7f8;
+  --ml-focus:        #6b3fa0;
+
+  /* severities — keep exact semantic colors */
+  --sev-fatal:       #0a0a0a;
+  --sev-fatal-bg:    #ececec;
+  --sev-error:       #dc2626;
+  --sev-error-bg:    #fde8e8;
+  --sev-error-dark:  #7a1313;          /* for "fatal bar" tint in dashboard */
+  --sev-warning:    #ea8a0c;
+  --sev-warning-bg: #fdf0d8;
+  --sev-info:       #15803d;
+  --sev-info-bg:    #dff3e6;
+  --sev-debug:      #6b7280;
+  --sev-debug-bg:   #eceef1;
+  --sev-all:        #4b5563;
+
+  /* sidebar (always dark per current product) */
+  --ml-side-bg:     #282a42;
+  --ml-side-bg-2:   #1f2138;
+  --ml-side-fg:     #e9eaf2;
+  --ml-side-fg-mute:#9d9fb8;
+  --ml-side-border: #3a3c58;
+  --ml-side-active: rgba(255,255,255,0.08);
+  --ml-side-active-border: #8a5cbf;
+
+  /* radii — small (datadog has near-zero radius) */
+  --ml-r-1: 2px;
+  --ml-r-2: 4px;
+  --ml-r-3: 6px;
+  --ml-r-pill: 999px;
+
+  /* spacing scale (4px base, very tight) */
+  --ml-s-0: 0;
+  --ml-s-1: 2px;
+  --ml-s-2: 4px;
+  --ml-s-3: 6px;
+  --ml-s-4: 8px;
+  --ml-s-5: 10px;
+  --ml-s-6: 12px;
+  --ml-s-7: 16px;
+  --ml-s-8: 20px;
+  --ml-s-9: 24px;
+
+  /* density — row heights */
+  --ml-row-h:       26px;
+  --ml-input-h:     26px;
+  --ml-btn-h:       26px;
+
+  /* type */
+  --ml-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   system-ui, "Helvetica Neue", Arial, sans-serif;
+  --ml-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas,
+                   "Liberation Mono", monospace;
+  --ml-fs-xs:   11px;
+  --ml-fs-sm:   12px;
+  --ml-fs-md:   13px;
+  --ml-fs-lg:   15px;
+  --ml-fs-xl:   18px;
+  --ml-fs-2xl:  22px;
+
+  --ml-shadow-1: 0 1px 2px rgba(15,18,25,0.06);
+  --ml-shadow-2: 0 4px 14px rgba(15,18,25,0.10), 0 1px 2px rgba(15,18,25,0.06);
+  --ml-shadow-pop: 0 10px 34px rgba(15,18,25,0.18), 0 2px 4px rgba(15,18,25,0.10);
+
+  /* layout */
+  --panel-width: 200px;
+  --topbar-h: 44px;
+}
+
+[data-theme="dark"] {
+  --ml-bg:           #0e1018;
+  --ml-bg-sub:       #141823;
+  --ml-bg-row-alt:   #131623;
+  --ml-surface:      #161a26;
+  --ml-surface-2:    #1c2030;
+  --ml-overlay:      rgba(0,0,0,0.55);
+
+  --ml-border:       #262b3a;
+  --ml-border-strong:#3a4055;
+  --ml-border-soft:  #1d2231;
+
+  --ml-fg:           #e6e8ee;
+  --ml-fg-2:         #c3c7d2;
+  --ml-fg-mute:      #8b919e;
+  --ml-fg-faint:     #5d6373;
+  --ml-link:         #79a8ff;
+
+  --ml-accent:       #a87cd9;
+  --ml-accent-2:     #c39bee;
+  --ml-accent-soft:  #2a1f3d;
+  --ml-focus:        #a87cd9;
+
+  --sev-fatal:       #0a0a0a;   /* drawn with ring in dark */
+  --sev-fatal-bg:    #2a2a2a;
+  --sev-error:       #ef4444;
+  --sev-error-bg:    #3a1414;
+  --sev-error-dark:  #b91c1c;
+  --sev-warning:    #f59e0b;
+  --sev-warning-bg: #3a2410;
+  --sev-info:       #22c55e;
+  --sev-info-bg:    #0e2d1a;
+  --sev-debug:      #94a1b4;
+  --sev-debug-bg:   #1e2434;
+  --sev-all:        #9aa3b2;
+
+  --ml-shadow-1: 0 1px 2px rgba(0,0,0,0.4);
+  --ml-shadow-2: 0 4px 14px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.4);
+  --ml-shadow-pop: 0 14px 40px rgba(0,0,0,0.55), 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* ---------- 2. Reset & base ---------- */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background: var(--ml-bg-sub);
+  color: var(--ml-fg);
+  font-family: var(--ml-font-sans);
+  font-size: var(--ml-fs-sm);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button { font-family: inherit; }
+a { color: var(--ml-link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, pre, .mono { font-family: var(--ml-font-mono); font-feature-settings: "tnum","cv11"; }

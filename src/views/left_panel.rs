@@ -2,60 +2,44 @@ use std::rc::Rc;
 
 use dioxus::prelude::*;
 
+use crate::components::icon;
+use crate::views::EnvsSelector;
 use crate::{LocationState, MainState};
 
 use dioxus_utils::*;
 
-const CLASS_NAME: &str = "menu-item-active";
+const ACTIVE: &str = "is-active";
+
 #[component]
 pub fn LeftPanel() -> Element {
-    let mut dashboard_active = "";
-    let mut logs_active = "";
-    let mut settings_active = "";
-    let mut ignore_lists_active = "";
-
     let location_state_value = {
         let location_state = consume_context::<Signal<LocationState>>();
         let value = location_state.read();
         value.copy_state()
     };
 
-    match location_state_value {
-        LocationState::Dashboard => {
-            dashboard_active = CLASS_NAME;
-        }
-        LocationState::Logs => {
-            logs_active = CLASS_NAME;
-        }
+    let dashboard_active = matches!(location_state_value, LocationState::Dashboard);
+    let logs_active = matches!(location_state_value, LocationState::Logs);
+    let ignore_active = matches!(
+        location_state_value,
+        LocationState::IgnoreList | LocationState::OneTimeIgnore
+    );
+    let settings_active = matches!(location_state_value, LocationState::Settings);
 
-        LocationState::IgnoreList => {
-            ignore_lists_active = CLASS_NAME;
+    let class_of = |active: bool| {
+        if active {
+            format!("ml-side__navitem {ACTIVE}")
+        } else {
+            "ml-side__navitem".to_string()
         }
-
-        LocationState::OneTimeIgnore => {
-            ignore_lists_active = CLASS_NAME;
-        }
-
-        LocationState::Settings => {
-            settings_active = CLASS_NAME;
-        }
-    }
-    let mut main_state = consume_context::<Signal<MainState>>();
-    let main_state_read_access = main_state.read();
-    /*
-    let (time_zone, server_settings, env) = {
-        let read_access = main_state.read();
-        (
-            read_access.get_selected_timezone(),
-            read_access.server_settings.clone(),
-            read_access.get_selected_env(),
-        )
     };
-     */
 
-    let server_settings = match main_state_read_access.server_settings.as_ref() {
+    let mut main_state = consume_context::<Signal<MainState>>();
+    let main_state_ra = main_state.read();
+
+    let server_settings = match main_state_ra.server_settings.as_ref() {
         RenderState::None => {
-            let selected_env = main_state_read_access.get_selected_env();
+            let selected_env = main_state_ra.get_selected_env();
             spawn(async move {
                 main_state.write().server_settings.set_loading();
                 let result =
@@ -63,87 +47,108 @@ pub fn LeftPanel() -> Element {
 
                 match result {
                     Ok(result) => {
-                        main_state
-                            .write()
-                            .server_settings
-                            .set_value(Rc::new(result));
+                        main_state.write().server_settings.set_value(Rc::new(result));
                     }
                     Err(err) => {
-                        main_state
-                            .write()
-                            .server_settings
-                            .set_error(err.to_string());
+                        main_state.write().server_settings.set_error(err.to_string());
                     }
                 }
             });
-
             None
         }
         RenderState::Loading => None,
-
-        RenderState::Loaded(value) => Some(value),
-        RenderState::Error(err) => {
-            return rsx! { "Error loading from server: {err}" };
-        }
+        RenderState::Loaded(value) => Some(value.clone()),
+        RenderState::Error(_) => None,
     };
 
-    let time_zone = format!(
-        "TimeZone: {}",
-        main_state_read_access.get_selected_timezone().to_string()
-    );
+    let time_zone = main_state_ra.get_selected_timezone().to_string();
 
     let client_version = env!("CARGO_PKG_VERSION");
-    let client_version = rsx! {
 
-        div { "Client ver: {client_version}" }
+    let (server_version, gc_value, connected) = match server_settings.as_ref() {
+        Some(server_settings) if !server_settings.version.is_empty() => (
+            server_settings.version.clone(),
+            format_hours_to_gc(server_settings.hours_to_gc),
+            true,
+        ),
+        _ => ("…".to_string(), "…".to_string(), false),
     };
 
-    let server_info = match server_settings {
-        Some(server_settings) => {
-            if server_settings.version.is_empty() {
-                client_version
-            } else {
-                let gc_timeout = format_hours_to_gc(server_settings.hours_to_gc);
-
-                rsx! {
-                    {client_version}
-                    div { "Server ver: {server_settings.version.as_str()}" }
-                    div { "GC: {gc_timeout.as_str()}" }
-                }
+    let status = if connected {
+        rsx! {
+            span { class: "ml-status",
+                span { class: "dot" }
+                "connected"
             }
         }
-
-        None => client_version,
+    } else {
+        rsx! {
+            span { class: "ml-status", "…" }
+        }
     };
 
     rsx! {
+        aside { class: "ml-side", role: "navigation", aria_label: "primary",
+            div { class: "ml-side__brand",
+                div { class: "ml-side__logo", "L" }
+                div { class: "ml-side__title", "Logs" }
+            }
 
-        div {
-            h1 { style: "color:white; padding:5px; text-align:center", "Logs" }
+            div { class: "ml-side__env",
+                div { class: "ml-side__label", "Environment" }
+                EnvsSelector {}
+            }
+
+            div { class: "ml-side__tz",
+                span { "TimeZone" }
+                span { style: "color: var(--ml-side-fg);", "{time_zone}" }
+            }
+
+            nav { class: "ml-side__nav",
+                Link { class: class_of(dashboard_active), to: "/",
+                    span { class: "ico", {icon("dashboard", 14)} }
+                    span { "Dashboard" }
+                }
+                Link {
+                    class: class_of(logs_active),
+                    onclick: move |_| {
+                        crate::storage_settings::time_range::clear();
+                        crate::storage_settings::search_line::clear();
+                        crate::storage_settings::log_level::clear();
+                    },
+                    to: "/logs",
+                    span { class: "ico", {icon("logs", 14)} }
+                    span { "Logs" }
+                }
+                Link { class: class_of(ignore_active), to: "/ignoreLists",
+                    span { class: "ico", {icon("ignore", 14)} }
+                    span { "Ignore Lists" }
+                }
+                Link { class: class_of(settings_active), to: "/settings",
+                    span { class: "ico", {icon("settings", 14)} }
+                    span { "Settings" }
+                }
+            }
+
+            div { class: "ml-side__footer",
+                div { class: "row",
+                    dt { "Client ver" }
+                    dd { "{client_version}" }
+                }
+                div { class: "row",
+                    dt { "Server ver" }
+                    dd { "{server_version}" }
+                }
+                div { class: "row",
+                    dt { "GC" }
+                    dd { "{gc_value}" }
+                }
+                div { class: "row",
+                    dt { "Status" }
+                    dd { {status} }
+                }
+            }
         }
-
-        div { style: "color: white;text-align: center;", "{time_zone}" }
-
-        div { style: "padding: 5px" }
-
-        Link { class: "menu-item {dashboard_active}", to: "/", "Dashboard" }
-
-        Link {
-            class: "menu-item {logs_active}",
-            onclick: move |_| {
-                crate::storage_settings::time_range::clear();
-                crate::storage_settings::search_line::clear();
-                crate::storage_settings::log_level::clear();
-            },
-            to: "/logs",
-            "Logs"
-        }
-
-        Link { class: "menu-item {ignore_lists_active}", to: "/ignoreLists", "Ignore Lists" }
-
-        Link { class: "menu-item {settings_active}", to: "/settings", "Settings" }
-
-        div { class: "server-info", {server_info} }
     }
 }
 

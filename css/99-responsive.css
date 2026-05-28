@@ -1,0 +1,10 @@
+/* Responsive — keep sidebar at 200px until narrow, then collapse to 48px icon-rail */
+@media (max-width: 880px) {
+  :root { --panel-width: 48px; }
+  .ml-side__title, .ml-side__envselect, .ml-side__tz, .ml-side__footer, .ml-side__navitem span:not(.ico),
+  .ml-side__label, .ml-side__brand .ml-side__title { display: none; }
+  .ml-side__brand { justify-content: center; padding: 10px 0; }
+  .ml-side__env { padding: 0; border-bottom: 0; }
+  .ml-side__navitem { justify-content: center; padding: 8px 0; }
+  .ml-logbar { flex-wrap: wrap; }
+}

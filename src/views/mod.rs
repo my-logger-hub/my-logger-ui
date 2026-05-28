@@ -1,5 +1,7 @@
 mod left_panel;
 pub use left_panel::*;
+mod top_bar;
+pub use top_bar::*;
 mod dashboard;
 pub use dashboard::*;
 

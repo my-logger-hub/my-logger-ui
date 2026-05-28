@@ -1,0 +1,95 @@
+/* ---------- 11. Logs search bar ---------- */
+.ml-logbar {
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: 9;
+  background: var(--ml-bg);
+  border-bottom: 1px solid var(--ml-border);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+.ml-logbar__group {
+  display: flex; align-items: center; gap: 6px;
+  border-right: 1px solid var(--ml-border);
+  padding-right: 8px;
+}
+.ml-logbar__group:last-of-type { border-right: 0; padding-right: 0; }
+.ml-logbar__group .ml-field__label {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  color: var(--ml-fg-mute);
+  font-weight: 600;
+  margin-right: 2px;
+}
+.ml-logbar__search {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+}
+.ml-logbar__search .ml-input { width: 100%; padding-left: 26px; padding-right: 28px; font-family: var(--ml-font-mono); }
+.ml-logbar__search .ico {
+  position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+  width: 12px; height: 12px; color: var(--ml-fg-mute);
+}
+.ml-logbar__searchhint {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  font-size: 10px; color: var(--ml-fg-faint);
+  border: 1px solid var(--ml-border-strong);
+  border-radius: 3px;
+  padding: 0 4px;
+  background: var(--ml-bg-sub);
+}
+
+/* Insights / autocomplete popover */
+.ml-insights {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 420px;
+  max-height: 320px;
+  background: var(--ml-surface);
+  border: 1px solid var(--ml-border-strong);
+  box-shadow: var(--ml-shadow-pop);
+  border-radius: var(--ml-r-3);
+  z-index: 20;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.ml-insights__hd {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--ml-border);
+  background: var(--ml-bg);
+  font-size: var(--ml-fs-xs);
+  color: var(--ml-fg-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ml-insights__list { overflow: auto; padding: 4px 0; }
+.ml-insights__item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-family: var(--ml-font-mono);
+  font-size: var(--ml-fs-sm);
+}
+.ml-insights__item:hover,
+.ml-insights__item.is-active { background: var(--ml-accent-soft); }
+[data-theme="dark"] .ml-insights__item:hover,
+[data-theme="dark"] .ml-insights__item.is-active { background: var(--ml-accent-soft); }
+.ml-insights__k { color: var(--ml-fg); flex: 0 0 auto; min-width: 120px; }
+.ml-insights__sample { color: var(--ml-fg-mute); font-size: 11px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ml-insights__count { font-size: 10.5px; color: var(--ml-fg-faint); }
+.ml-insights__ft {
+  border-top: 1px solid var(--ml-border);
+  padding: 6px 10px;
+  font-size: 10.5px;
+  color: var(--ml-fg-mute);
+  background: var(--ml-bg);
+  display: flex; justify-content: space-between;
+}
+.ml-insights__kbd { font-family: var(--ml-font-mono); border: 1px solid var(--ml-border-strong); border-radius: 2px; padding: 0 4px; }

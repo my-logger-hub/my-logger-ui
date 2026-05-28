@@ -1,0 +1,32 @@
+/* ---------- 8. Severity bits ---------- */
+.ml-ball {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--sev-debug);
+  flex-shrink: 0;
+}
+.ml-ball.lvl-debug    { background: var(--sev-debug); }
+.ml-ball.lvl-info     { background: var(--sev-info); }
+.ml-ball.lvl-warning  { background: var(--sev-warning); }
+.ml-ball.lvl-error    { background: var(--sev-error); }
+.ml-ball.lvl-fatal    { background: var(--sev-fatal); box-shadow: inset 0 0 0 1px #fff2; }
+[data-theme="dark"] .ml-ball.lvl-fatal { box-shadow: inset 0 0 0 1px #6668; outline: 1px solid #4448; }
+
+.ml-lvltag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--ml-fs-xs);
+  font-weight: 600;
+  padding: 1px 7px 1px 6px;
+  border-radius: var(--ml-r-pill);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.ml-lvltag.lvl-debug   { background: var(--sev-debug-bg);   color: var(--sev-debug); }
+.ml-lvltag.lvl-info    { background: var(--sev-info-bg);    color: var(--sev-info); }
+.ml-lvltag.lvl-warning { background: var(--sev-warning-bg); color: var(--sev-warning); }
+.ml-lvltag.lvl-error   { background: var(--sev-error-bg);   color: var(--sev-error); }
+.ml-lvltag.lvl-fatal   { background: var(--sev-fatal-bg);   color: var(--sev-fatal); }
+[data-theme="dark"] .ml-lvltag.lvl-fatal { color: #e6e8ee; }

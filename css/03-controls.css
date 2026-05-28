@@ -1,0 +1,143 @@
+/* ---------- 6. Buttons ---------- */
+.ml-btn {
+  height: var(--ml-btn-h);
+  padding: 0 10px;
+  background: var(--ml-surface);
+  color: var(--ml-fg);
+  border: 1px solid var(--ml-border-strong);
+  border-radius: var(--ml-r-2);
+  font-size: var(--ml-fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-family: inherit;
+  text-decoration: none;
+}
+.ml-btn:hover { background: var(--ml-surface-2); text-decoration: none; color: var(--ml-fg); }
+.ml-btn:focus-visible { outline: 2px solid var(--ml-focus); outline-offset: 1px; }
+.ml-btn.is-primary {
+  background: var(--ml-accent);
+  border-color: var(--ml-accent);
+  color: white;
+}
+.ml-btn.is-primary:hover { background: var(--ml-accent-2); color: white; }
+.ml-btn.is-danger { color: var(--sev-error); border-color: var(--sev-error); background: transparent; }
+.ml-btn.is-danger:hover { background: var(--sev-error-bg); color: var(--sev-error); }
+.ml-btn.is-ghost { background: transparent; border-color: transparent; }
+.ml-btn.is-ghost:hover { background: var(--ml-surface-2); }
+.ml-btn[disabled],
+.ml-btn.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.ml-btn--icon {
+  width: var(--ml-btn-h);
+  padding: 0;
+  justify-content: center;
+}
+
+/* ---------- 7. Inputs ---------- */
+.ml-input,
+.ml-select {
+  height: var(--ml-input-h);
+  padding: 0 8px;
+  background: var(--ml-surface);
+  color: var(--ml-fg);
+  border: 1px solid var(--ml-border-strong);
+  border-radius: var(--ml-r-2);
+  font-size: var(--ml-fs-sm);
+  font-family: inherit;
+  outline: none;
+  min-width: 0;
+}
+.ml-input:focus,
+.ml-select:focus { border-color: var(--ml-focus); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ml-focus) 22%, transparent); }
+.ml-input.is-invalid { border-color: var(--sev-error); }
+.ml-input.is-invalid:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--sev-error) 22%, transparent); }
+.ml-input--mono { font-family: var(--ml-font-mono); }
+.ml-select {
+  appearance: none;
+  padding-right: 22px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 4l3 3 3-3' fill='none' stroke='%23667' stroke-width='1.5'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+}
+[data-theme="dark"] .ml-select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 4l3 3 3-3' fill='none' stroke='%23889' stroke-width='1.5'/></svg>");
+}
+.ml-input-row { display: flex; align-items: center; gap: 6px; }
+.ml-field { display: flex; flex-direction: column; gap: 4px; }
+.ml-field__label {
+  font-size: var(--ml-fs-xs);
+  font-weight: 600;
+  color: var(--ml-fg-mute);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.ml-field__hint { font-size: var(--ml-fs-xs); color: var(--ml-fg-mute); }
+.ml-field__error { font-size: var(--ml-fs-xs); color: var(--sev-error); }
+
+/* Level select adopts severity color */
+.ml-select--lvl { font-weight: 600; }
+.ml-select--lvl.lvl-all      { color: var(--sev-all); }
+.ml-select--lvl.lvl-debug    { color: var(--sev-debug); }
+.ml-select--lvl.lvl-info     { color: var(--sev-info); }
+.ml-select--lvl.lvl-warning  { color: var(--sev-warning); }
+.ml-select--lvl.lvl-error    { color: var(--sev-error); }
+.ml-select--lvl.lvl-fatal    { color: var(--sev-fatal); }
+[data-theme="dark"] .ml-select--lvl.lvl-fatal { color: #e6e8ee; }
+
+/* Segmented control */
+.ml-seg {
+  display: inline-flex;
+  border: 1px solid var(--ml-border-strong);
+  border-radius: var(--ml-r-2);
+  overflow: hidden;
+  background: var(--ml-surface);
+}
+.ml-seg__btn {
+  padding: 5px 12px;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--ml-border-strong);
+  font-size: var(--ml-fs-sm);
+  color: var(--ml-fg-2);
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+}
+.ml-seg__btn:last-child { border-right: 0; }
+.ml-seg__btn:hover { background: var(--ml-surface-2); }
+.ml-seg__btn.is-active {
+  background: var(--ml-accent);
+  color: #fff;
+}
+
+/* Checkbox & "level checkbox pill" */
+.ml-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ml-fs-sm);
+  cursor: pointer;
+  user-select: none;
+}
+.ml-check input { accent-color: var(--ml-accent); width: 13px; height: 13px; margin: 0; }
+.ml-lvlchk {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 6px;
+  border: 1px solid var(--ml-border-strong);
+  border-radius: var(--ml-r-pill);
+  font-size: var(--ml-fs-sm);
+  cursor: pointer;
+  background: var(--ml-surface);
+  user-select: none;
+}
+.ml-lvlchk.is-checked { background: var(--ml-accent-soft); border-color: var(--ml-accent); color: var(--ml-fg); }
+[data-theme="dark"] .ml-lvlchk.is-checked { background: var(--ml-accent-soft); }

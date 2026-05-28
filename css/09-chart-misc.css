@@ -1,0 +1,58 @@
+/* ---------- 16. Chart ---------- */
+.ml-chart { position: relative; width: 100%; height: 360px; }
+.ml-chart svg { width: 100%; height: 100%; display: block; }
+.ml-chart__legend {
+  display: flex; gap: 14px; padding: 4px 12px 8px;
+  font-size: var(--ml-fs-xs);
+  color: var(--ml-fg-mute);
+  border-bottom: 1px solid var(--ml-border-soft);
+}
+.ml-chart__legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+/* ---------- 17. Misc ---------- */
+.ml-divider { height: 1px; background: var(--ml-border); margin: 6px 0; }
+.ml-spacer { flex: 1; }
+.ml-hint { font-size: var(--ml-fs-xs); color: var(--ml-fg-mute); }
+.ml-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 7px;
+  background: var(--ml-surface-2);
+  border: 1px solid var(--ml-border);
+  border-radius: var(--ml-r-pill);
+  font-size: var(--ml-fs-xs);
+  color: var(--ml-fg-mute);
+}
+.ml-kbd {
+  font-family: var(--ml-font-mono);
+  font-size: 10.5px;
+  border: 1px solid var(--ml-border-strong);
+  background: var(--ml-bg-sub);
+  border-radius: 2px;
+  padding: 0 4px;
+}
+
+/* Settings */
+.ml-settings { max-width: 720px; }
+.ml-settings .ml-card__bd { padding: 0; }
+.ml-settings__row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--ml-border-soft);
+  align-items: center;
+  gap: 12px;
+}
+.ml-settings__row:last-child { border-bottom: 0; }
+.ml-settings__lbl { display: flex; flex-direction: column; gap: 2px; }
+.ml-settings__lbl strong { font-weight: 600; font-size: var(--ml-fs-md); }
+.ml-settings__lbl span { color: var(--ml-fg-mute); font-size: var(--ml-fs-xs); }
+
+/* Toast / status row */
+.ml-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ml-fs-xs);
+  color: var(--ml-fg-mute);
+}
+.ml-status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--sev-info); }

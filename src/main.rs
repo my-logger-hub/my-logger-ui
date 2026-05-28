@@ -54,6 +54,11 @@ fn main() {
         .launch(|| {
             rsx! {
                 document::Link { rel: "icon", href: asset!("/public/favicon.ico") }
+                document::Link { rel: "preconnect", href: "https://fonts.googleapis.com" }
+                document::Link {
+                    rel: "stylesheet",
+                    href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap",
+                }
                 Router::<AppRoute> {}
             }
         })
@@ -206,6 +211,8 @@ fn App() -> Element {
 
 #[component]
 fn ActiveApp() -> Element {
+    use_hook(|| crate::storage_settings::theme::apply_current());
+
     let location_state_value = {
         let location_state = consume_context::<Signal<LocationState>>();
         let value = location_state.read();
@@ -232,11 +239,13 @@ fn ActiveApp() -> Element {
     };
 
     rsx! {
-        div { id: "left-panel",
-            div { style: "margin: 5px;", EnvsSelector {} }
+        div { class: "ml-app",
             LeftPanel {}
+            main { class: "ml-app__main",
+                TopBar {}
+                {right_panel}
+            }
+            RenderDialog {}
         }
-        div { id: "main-panel", {right_panel} }
-        RenderDialog {}
     }
 }

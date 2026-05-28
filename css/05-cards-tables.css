@@ -1,0 +1,134 @@
+/* ---------- 9. Card / panel ---------- */
+.ml-card {
+  background: var(--ml-surface);
+  border: 1px solid var(--ml-border);
+  border-radius: var(--ml-r-3);
+  overflow: hidden;
+}
+.ml-card__hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ml-border);
+  background: var(--ml-bg);
+}
+.ml-card__title {
+  font-size: var(--ml-fs-md);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.ml-card__sub { font-size: var(--ml-fs-xs); color: var(--ml-fg-mute); margin-left: auto; }
+.ml-card__bd { padding: 12px; }
+.ml-card__bd--flat { padding: 0; }
+
+/* ---------- 10. Tables ---------- */
+.ml-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--ml-fs-sm);
+  background: var(--ml-surface);
+}
+.ml-table thead th {
+  position: sticky; top: 0;
+  background: var(--ml-bg);
+  z-index: 2;
+  text-align: left;
+  font-weight: 600;
+  color: var(--ml-fg-mute);
+  font-size: var(--ml-fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--ml-border);
+  white-space: nowrap;
+}
+.ml-table tbody td {
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--ml-border-soft);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.ml-table tbody tr:hover td { background: var(--ml-bg-row-alt); }
+.ml-table tbody tr.is-skipped td { opacity: 0.5; text-decoration: line-through; }
+.ml-table--striped tbody tr:nth-child(odd) td { background: var(--ml-bg-row-alt); }
+.ml-table--striped tbody tr:hover td { background: var(--ml-surface-2); }
+
+.ml-table .col--time    { width: 132px; white-space: nowrap; font-family: var(--ml-font-mono); color: var(--ml-fg-2); }
+.ml-table .col--ball    { width: 16px; padding-right: 0; }
+.ml-table .col--lvl     { width: 86px; }
+.ml-table .col--app     { width: 200px; }
+.ml-table .col--num     { width: 72px; text-align: right; }
+.ml-table .col--actions { width: 84px; text-align: right; white-space: nowrap; }
+.ml-table .col--proc    { width: 140px; font-family: var(--ml-font-mono); color: var(--ml-fg-2); }
+.ml-table--logs tbody td { font-size: var(--ml-fs-sm); }
+.ml-table--logs tbody .col--msg { font-family: var(--ml-font-mono); color: var(--ml-fg); word-break: break-word; }
+
+/* Group / section row inside a table */
+.ml-table__group td {
+  background: var(--ml-surface-2) !important;
+  font-weight: 700;
+  font-size: var(--ml-fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ml-fg-2);
+  padding: 5px 10px !important;
+  border-top: 1px solid var(--ml-border);
+}
+
+/* Numeric "bar-in-cell" */
+.ml-barcell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.ml-barcell__count {
+  font-family: var(--ml-font-mono);
+  font-feature-settings: "tnum";
+  font-size: var(--ml-fs-sm);
+  font-weight: 600;
+  color: var(--ml-link);
+  cursor: pointer;
+}
+.ml-barcell__count:hover { text-decoration: underline; }
+.ml-barcell__bar {
+  flex: 1;
+  height: 6px;
+  background: var(--ml-surface-2);
+  border-radius: 1px;
+  position: relative;
+  max-width: 88px;
+  min-width: 30px;
+}
+.ml-barcell__fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 1px; }
+.ml-barcell__fill.lvl-error    { background: var(--sev-error); }
+.ml-barcell__fill.lvl-fatal    { background: var(--sev-error-dark); }
+.ml-barcell__fill.lvl-warning  { background: var(--sev-warning); }
+.ml-barcell--zero .ml-barcell__count { color: var(--ml-fg-faint); cursor: default; font-weight: 400; }
+.ml-barcell--zero .ml-barcell__count:hover { text-decoration: none; }
+
+/* Context kv list inside a log row */
+.ml-kv {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+}
+.ml-kv__pair {
+  display: inline-flex;
+  align-items: baseline;
+  padding: 0 4px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  font-family: var(--ml-font-mono);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.ml-kv__k { color: var(--ml-fg-mute); }
+.ml-kv__sep { color: var(--ml-fg-faint); padding: 0 1px; }
+.ml-kv__v { color: var(--ml-fg); }
+.is-clickable .ml-kv__pair { cursor: pointer; }
+.is-clickable .ml-kv__pair:hover { background: var(--ml-accent-soft); border-color: var(--ml-accent); }
+.is-clickable .col--proc { cursor: pointer; }
+.is-clickable .col--proc:hover { color: var(--ml-accent); text-decoration: underline; }
