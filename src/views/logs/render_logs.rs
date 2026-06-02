@@ -80,11 +80,14 @@ pub fn RenderLogs() -> Element {
         RenderState::Error(err) => return rsx! { "Error loading data: {err}" },
     };
 
+    let now = dioxus_utils::now_date_time();
+
     let items = items.iter().map(|itm| {
         let itm = itm.clone();
 
-        let dt = DateTimeAsMicroseconds::new(itm.timestamp);
-        let dt = time_zone.to_local_time(dt);
+        let dt_utc = DateTimeAsMicroseconds::new(itm.timestamp);
+        let dt = time_zone.to_local_time(dt_utc);
+        let ago = format_duration_ago(now, dt_utc);
 
         let key_values: Vec<_> = itm
             .ctx
@@ -112,7 +115,10 @@ pub fn RenderLogs() -> Element {
         rsx! {
             tr { style: "border-top: 1px solid lightgray;",
                 td { {log_ball} }
-                td { style: "margin:0;padding:0", "{&dt.to_rfc3339()[..26]}" }
+                td { style: "margin:0;padding:0",
+                    div { "{&dt.to_rfc3339()[..26]}" }
+                    div { style: "font-size: 11px; color: gray;", "{ago} ago" }
+                }
                 td { style: "margin:0;padding:0",
                     div {
                         style: "{cursor}",
@@ -145,6 +151,31 @@ pub fn RenderLogs() -> Element {
             {items}
         }
     }
+}
+
+fn format_duration_ago(now: DateTimeAsMicroseconds, dt: DateTimeAsMicroseconds) -> String {
+    let secs = now.duration_since(dt).get_full_seconds();
+
+    if secs <= 0 {
+        return "now".to_string();
+    }
+
+    if secs < 60 {
+        return format!("{}s", secs);
+    }
+
+    let minutes = secs / 60;
+    if minutes < 60 {
+        return format!("{}m {}s", minutes, secs % 60);
+    }
+
+    let hours = minutes / 60;
+    if hours < 24 {
+        return format!("{}h {}m", hours, minutes % 60);
+    }
+
+    let days = hours / 24;
+    format!("{}d {}h", days, hours % 24)
 }
 
 fn loading_panel() -> Element {

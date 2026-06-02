@@ -57,6 +57,7 @@ pub fn RenderLogsPanel(
 
     rsx! {
 
+      div { style: "position: sticky; top: 44px; z-index: 5; background: white;",
         table { style: "width: 100%; border-bottom: 1px lightgray solid; box-shadow: 0 0 5px lightgray; background: white;",
             tr {
                 td { style: "width: 150px;",
@@ -153,6 +154,7 @@ pub fn RenderLogsPanel(
                 }
             }
         }
+      }
     }
 }
 
