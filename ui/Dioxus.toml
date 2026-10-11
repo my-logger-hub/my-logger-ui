@@ -1,0 +1,53 @@
+[application]
+
+# App (Project) Name
+name = "my-logger-ui-client"
+
+# Dioxus App Default Platform
+# desktop, web, mobile, ssr
+default_platform = "web"
+
+# `build` & `serve` dist path
+#out_dir = "dist"
+
+# resource (public) file folder
+asset_dir = "assets"
+
+[web.app]
+# HTML title tag content
+title = "Logger"
+
+
+[web.watcher]
+# when watcher trigger, regenerate the `index.html`
+reload_html = false
+
+# which files or dirs will be watcher monitoring
+#watch_path = ["src", "public", "index.html"]
+
+# let the SPA handle any non "/" path
+index_on_404 = true
+
+# include `assets` in web platform
+[web.resource]
+
+# CSS style file
+style = ["/assets/styled.css", "/assets/app.css"]
+
+# Javascript code file
+script = ["/assets/chart.js", "https://www.gstatic.com/charts/loader.js"]
+
+[web.resource.dev]
+
+# Javascript code file
+# serve: [dev-server] only
+script = []
+
+# Release builds: full wasm-opt -Oz. It is dx's default today - spelled out so that a dx
+# update can not quietly change what ships.
+[web.wasm_opt]
+level = "z"
+
+# `dx serve` forwards the API calls to the server running locally (`cargo run` in the root folder)
+[[web.proxy]]
+backend = "http://localhost:8000/api/"

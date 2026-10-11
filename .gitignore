@@ -1,6 +1,7 @@
-/target
-Cargo.lock
-.DS_Store
-.dioxus
+**/target
+**/Cargo.lock
+**/.DS_Store
+**/.dioxus
 dist
 static
+.mcp.json

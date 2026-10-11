@@ -1,0 +1,16 @@
+[package]
+name = "rest-api-shared"
+version = "0.1.0"
+edition = "2021"
+
+# Wire models shared verbatim by the HTTP server (root crate, with the "server" feature) and the
+# Dioxus client in ui/ (without it). Must stay wasm-clean: my-http-utils is the only MyJetTools
+# dependency, never my-http-server.
+
+[features]
+default = []
+server = ["my-http-utils/server"]
+
+[dependencies]
+my-http-utils = { tag = "0.1.0", git = "https://github.com/MyJetTools/my-http-utils.git" }
+serde = { version = "*", features = ["derive"] }

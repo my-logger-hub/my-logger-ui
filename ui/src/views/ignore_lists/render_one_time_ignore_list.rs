@@ -1,0 +1,203 @@
+use std::{rc::Rc};
+
+use dioxus::prelude::*;
+
+
+
+use crate::{dialogs::DialogState, *};
+use components::*;
+
+use crate::models::*;
+
+#[component]
+pub fn RenderOneTimeIgnoreList() -> Element {
+    let mut dialog_state = consume_context::<Signal<DialogState>>();
+
+    let mut main_state = consume_context::<Signal<MainState>>();
+
+    let main_state_read_access = main_state.read();
+
+    let env = main_state_read_access.get_selected_env();
+
+    let value = match main_state_read_access.one_time_ignore_events.as_ref() {
+        RenderState::None => {
+            load_from_db(env.clone(), main_state);
+            return rsx! {
+                h1 { "Loading" }
+            };
+        }
+
+        RenderState::Loading => {
+            return rsx! {
+                h1 { "Loading" }
+            };
+        }
+
+        RenderState::Loaded(value) => value.clone(),
+        RenderState::Error(err) => return rsx! { "Error loading data: {err}" },
+    };
+
+    let table_content = value.into_iter().map(|itm| {
+        let levels = itm.levels.iter().map(|level| {
+            let log_ball = render_log_ball(level.clone());
+            rsx! {
+                tr {
+                    td { {log_ball} }
+                    td { {level.as_str()} }
+                }
+            }
+        });
+
+        
+        
+        let ctx_matches = if let Some(ctx) = itm.ctx_match.as_ref(){
+            let items = ctx.iter().map(|(key, value)| {
+                rsx! {
+                    div { "{key.as_str()}:{value.as_str()}" }
+                }
+            });
+
+            rsx!{
+                {items}
+            }
+        }else{
+            rsx! {
+                div {}
+            }
+        };
+        
+
+        let env = env.clone();
+        let env_to_delete = env.clone();
+        let id_to_delete = Rc::new(itm.id.clone());
+        rsx! {
+            tr {
+                td { {levels} }
+
+                td { {itm.message_match.as_str()} }
+
+                td { {ctx_matches} }
+                td { {itm.skip_amount.to_string()} }
+                td { {itm.minutes_to_wait.to_string()} }
+                td {
+
+                    div { class: "btn-group",
+                        button {
+                            class: "btn btn-primary btn-sm",
+                            style: "padding:2px 6px",
+                            onclick: move |_| {
+                                let env = env.clone();
+                                let itm = itm.clone();
+                                dialog_state
+                                    .set(DialogState::EditOneTimeIgnoreEvent {
+                                        itm: itm,
+                                        on_ok: EventHandler::new(move |item_to_save| {
+                                            let env = env.clone();
+                                            spawn(async move {
+                                                let _ = crate::api::one_time_ignore_events::save_one_time_ignore_event(
+                                                        env.to_string(),
+                                                        item_to_save,
+                                                    )
+                                                    .await;
+                                                main_state.write().reset_data();
+                                            });
+                                        }),
+                                    });
+                            },
+                            "Edit"
+                        }
+                        button {
+                            class: "btn btn-primary btn-sm",
+                            style: "padding:2px 6px",
+                            onclick: move |_| {
+                                let env_to_delete = env_to_delete.clone();
+                                let id_to_delete = id_to_delete.clone();
+                                dialog_state
+                                    .set(DialogState::Confirmation {
+                                        text: "Please confirm that you want to delete this item"
+                                            .to_string()
+                                            .into(),
+                                        on_ok: EventHandler::new(move |_| {
+                                            let env_to_delete = env_to_delete.clone();
+                                            let id_to_delete = id_to_delete.clone();
+                                            spawn(async move {
+                                                let _ = crate::api::one_time_ignore_events::delete_one_time_ignore_event(
+                                                        env_to_delete.to_string(),
+                                                        id_to_delete.to_string(),
+                                                    )
+                                                    .await;
+                                                main_state.write().reset_data();
+                                            });
+                                        }),
+                                    });
+                            },
+                            "Delete"
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    rsx! {
+        table { class: "table table-striped",
+            thead {
+                tr {
+                    th { "Levels" }
+                    th { "Message match" }
+                    th { "Context Match" }
+                    th { "Skip amount" }
+                    th { "Minutes to wait" }
+                    th {
+                        button {
+                            class: "btn btn-primary btn-sm",
+                            style: "padding:2px 6px",
+                            onclick: move |_| {
+                                let env = env.clone();
+                                dialog_state
+                                    .set(DialogState::EditOneTimeIgnoreEvent {
+                                        itm: OneTimeIgnoreHttpModel::create_new().into(),
+                                        on_ok: EventHandler::new(move |item_to_save| {
+                                            let env = env.clone();
+                                            spawn(async move {
+                                                let _ = crate::api::one_time_ignore_events::save_one_time_ignore_event(
+                                                        env.to_string(),
+                                                        item_to_save,
+                                                    )
+                                                    .await;
+                                                consume_context::<Signal<MainState>>().write().reset_data();
+                                            });
+                                        }),
+                                    });
+                            },
+                            "+"
+                        }
+                    }
+                }
+            }
+
+            tbody { {table_content} }
+        }
+    }
+}
+
+fn load_from_db(env: Rc<String>, mut main_state: Signal<MainState>) {
+    spawn(async move {
+                   main_state.write().one_time_ignore_events.set_loading();
+        
+        let result = crate::api::one_time_ignore_events::get(env.to_string()).await;
+
+        match result{
+            Ok(result)=>{
+                let result = result.into_iter().map(|itm| Rc::new(itm)).collect();
+                main_state.write().one_time_ignore_events.set_value(result);
+        
+            }
+            Err(err)=>{
+                main_state.write().one_time_ignore_events.set_error(err.to_string());
+            }
+        }
+    });
+}
+
+
