@@ -75,6 +75,7 @@ fn Logs(data: Vec<String>) -> Element {
             crate::storage_settings::search_line::set(&model.search_string);
             crate::storage_settings::ctx_search::set(model.is_ctx_search);
             crate::storage_settings::time_range::set_as_str(&model.time_range);
+            crate::storage_settings::product_scope::set(&model.product_scope);
         }
     }
 

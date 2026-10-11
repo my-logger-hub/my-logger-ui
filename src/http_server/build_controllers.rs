@@ -22,6 +22,10 @@ pub fn build_controllers(app: &Arc<AppContext>) -> ControllersMiddleware {
 
     result.register_get_action(Arc::new(insights::GetInsightsKeysAction::new(app.clone())));
 
+    result.register_get_action(Arc::new(product_scopes::GetProductScopesAction::new(
+        app.clone(),
+    )));
+
     result.register_get_action(Arc::new(ignore_events::GetIgnoreEventsAction::new(
         app.clone(),
     )));

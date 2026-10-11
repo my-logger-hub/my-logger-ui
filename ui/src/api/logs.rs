@@ -9,12 +9,14 @@ pub async fn search_logs(
     from_time: i64,
     to_time: i64,
     phrase: String,
+    product_scope: Option<String>,
 ) -> Result<Vec<LogApiItem>, RequestError> {
     let request = SearchLogsHttpRequest {
         env,
         from_time,
         to_time,
         phrase,
+        product_scope,
     };
 
     let response = FlUrl::new("/api/logs/v1/search")
@@ -30,6 +32,7 @@ pub async fn load_logs(
     from_time: i64,
     to_time: i64,
     ctx: Vec<LogEventContextApiModel>,
+    product_scope: Option<String>,
 ) -> Result<Vec<LogApiItem>, RequestError> {
     let request = LoadLogsHttpRequest {
         env,
@@ -37,6 +40,7 @@ pub async fn load_logs(
         from_time,
         to_time,
         ctx,
+        product_scope,
     };
 
     let response = FlUrl::new("/api/logs/v1/load")

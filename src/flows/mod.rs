@@ -14,6 +14,8 @@ mod search_logs;
 pub use search_logs::*;
 mod get_insights_keys;
 pub use get_insights_keys::*;
+mod get_product_scopes;
+pub use get_product_scopes::*;
 mod get_ignore_events;
 pub use get_ignore_events::*;
 mod add_ignore_event;

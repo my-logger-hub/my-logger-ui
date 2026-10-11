@@ -188,6 +188,7 @@ fn load_log_items(env: Rc<String>, search_panel_state: SearchPanelState) {
     spawn(async move {
         let mut main_state = consume_context::<Signal<MainState>>();
         main_state.write().logs_data.set_loading();
+        let product_scope = Some(search_panel_state.product_scope.clone()).filter(|s| !s.is_empty());
         match search_panel_state.search_type {
             SearchType::Ctx => {
                 load(
@@ -197,6 +198,7 @@ fn load_log_items(env: Rc<String>, search_panel_state: SearchPanelState) {
                     crate::log_event_context_parser::parse_key_value_from_string(
                         search_panel_state.filter.as_str(),
                     ),
+                    product_scope,
                 );
             }
 
@@ -206,6 +208,7 @@ fn load_log_items(env: Rc<String>, search_panel_state: SearchPanelState) {
                     env.clone(),
                     &search_panel_state.time_range,
                     search_panel_state.filter,
+                    product_scope,
                 );
             }
         }
@@ -217,6 +220,7 @@ fn load<'s>(
     time_range: &TimeRange,
     mut main_state: Signal<MainState>,
     context_keys: Vec<LogEventContextApiModel>,
+    product_scope: Option<String>,
 ) {
     {
         main_state.write().logs_data.set_loading();
@@ -234,8 +238,15 @@ fn load<'s>(
 
     let (from, to) = time_range.get_date_from_date_to();
     spawn(async move {
-        let result =
-            crate::api::logs::load_logs(env.to_string(), level, from, to, context_keys).await;
+        let result = crate::api::logs::load_logs(
+            env.to_string(),
+            level,
+            from,
+            to,
+            context_keys,
+            product_scope,
+        )
+        .await;
 
         match result {
             Ok(result) => {
@@ -255,10 +266,12 @@ pub fn search_as_text(
     env: Rc<String>,
     time_range: &TimeRange,
     phrase: String,
+    product_scope: Option<String>,
 ) {
     let (from, to) = time_range.get_date_from_date_to();
     spawn(async move {
-        let result = crate::api::logs::search_logs(env.to_string(), from, to, phrase).await;
+        let result =
+            crate::api::logs::search_logs(env.to_string(), from, to, phrase, product_scope).await;
 
         match result {
             Ok(result) => {

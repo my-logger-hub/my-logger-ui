@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use dioxus::prelude::*;
 
@@ -13,6 +13,14 @@ pub fn render_top_apps_with_errors(
     let mut by_hour_keys = BTreeMap::new();
 
     let mut max_errors = 0;
+
+    // The statistics are of every product scope: an application is shown with its scope when
+    // there are several, and its logs are read from that scope
+    let scopes: BTreeSet<&str> = hourly_statistics
+        .iter()
+        .map(|itm| itm.scope.as_str())
+        .collect();
+    let show_scopes = scopes.len() > 1;
 
     for itm in hourly_statistics {
         if itm.error == 0 && itm.warning == 0 && itm.fatal == 0 {
@@ -36,7 +44,7 @@ pub fn render_top_apps_with_errors(
         }
 
         by_hour_keys.get_mut(&itm.hour_key).unwrap().insert(
-            itm.app.to_string(),
+            (itm.scope.to_string(), itm.app.to_string()),
             TotalStatistics {
                 errors: itm.error,
                 fatal_errors: itm.fatal,
@@ -62,13 +70,11 @@ pub fn render_top_apps_with_errors(
             }
         });
 
-        let mut sorted_items = BTreeMap::new();
+        // The most errors first; equal totals all stay
+        let mut sorted_items: Vec<_> = items.into_iter().collect();
+        sorted_items.sort_by(|(_, a), (_, b)| b.total().cmp(&a.total()));
 
-        for (app, stat_data) in items {
-            sorted_items.insert(stat_data.total(), (app, stat_data));
-        }
-
-        for (_, (app, stat_data)) in sorted_items.into_iter().rev() {
+        for ((scope, app), stat_data) in sorted_items {
             let (err_width, fatal_err_width, warn_width) = if max_errors == 0 {
                 (0.0, 0.0, 0.0)
             } else {
@@ -81,7 +87,12 @@ pub fn render_top_apps_with_errors(
 
             items_to_render.push(rsx! {
                 tr {
-                    td { {app.as_str()} }
+                    td {
+                        {app.as_str()}
+                        if show_scopes {
+                            div { style: "font-size: 11px; color: gray;", {scope.as_str()} }
+                        }
+                    }
                     td {
                         div {
                             "Errors: "
@@ -93,6 +104,7 @@ pub fn render_top_apps_with_errors(
                                             search_string: generate_app_line(&app),
                                             level: SelectedLevel::Error.into(),
                                             time_range: hour_key_as_string_utc_0.to_string(),
+                                            product_scope: scope.to_string(),
                                         }
                                             .to_base_64(),
                                     ],
@@ -119,6 +131,7 @@ pub fn render_top_apps_with_errors(
                                             search_string: generate_app_line(&app),
                                             level: SelectedLevel::FatalError.into(),
                                             time_range: hour_key_as_string_utc_0.to_string(),
+                                            product_scope: scope.to_string(),
                                         }
                                             .to_base_64(),
                                     ],
@@ -145,6 +158,7 @@ pub fn render_top_apps_with_errors(
                                             search_string: generate_app_line(&app),
                                             level: SelectedLevel::Warning.into(),
                                             time_range: hour_key_as_string_utc_0.to_string(),
+                                            product_scope: scope.to_string(),
                                         }
                                             .to_base_64(),
                                     ],

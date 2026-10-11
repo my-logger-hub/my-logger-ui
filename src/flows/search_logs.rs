@@ -16,6 +16,7 @@ pub async fn search_logs(
         to_time: request.to_time,
         take: LOGS_TO_TAKE,
         phrase: request.phrase,
+        product_scope: request.product_scope,
     };
 
     let result = grpc_client

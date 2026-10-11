@@ -39,6 +39,8 @@ message ReadLogEventRequest{
     int32 Skip = 5;
     repeated LogLevelGrpcModel Levels = 6;
     repeated LogEventContext ContextKeys = 7;
+    // The default product scope when it is not set
+    optional string ProductScope = 8;
 }
 
 message GetStatisticRequest{
@@ -68,12 +70,28 @@ message DeleteIgnoreEventGrpcRequest{
     string Marker = 3;
 }
 
+// FromTime and ToTime are encoded as in ReadLogEventRequest. Levels, ContextKeys and Phrase
+// filter together; an empty one does not filter.
+message SearchLogsRequest{
+    string UiUrl = 1;
+    int64 FromTime = 2;
+    int64 ToTime = 3;
+    int32 Take = 4;
+    repeated LogLevelGrpcModel Levels = 5;
+    repeated LogEventContext ContextKeys = 6;
+    string Phrase = 7;
+    // The default product scope when it is not set
+    optional string ProductScope = 8;
+}
+
 message ScanAndSearchRequest{
     string UiUrl = 1;
     string Phrase = 2;
     int64 FromTime = 3;
     int64 ToTime = 4;
     int32 Take = 5;
+    // The default product scope when it is not set
+    optional string ProductScope = 6;
 }
 
 message IgnoreSingleEventGrpcModel{
@@ -102,6 +120,8 @@ message HourlyStatisticsGrpcModel{
     uint32 ErrorCount = 5;
     uint32 FatalCount = 6;
     uint32 DebugCount = 7;
+    // The product scope the records of the application went to
+    string Scope = 8;
 }
 
 message GetInsightsKeysResponse{
@@ -118,6 +138,20 @@ message GetInsightsValuesResponse{
 }
 
 
+// Applications are the regular expressions an application name matches whole, ignoring
+// case. A scope there are records of, but not set, has none.
+message ProductScopeGrpcModel{
+    string Name = 1;
+    repeated string Applications = 2;
+}
+
+// The default scope first - where the records no scope matches go - then the scopes in the
+// order they are matched, then the other ones there are records of
+message GetProductScopesResponse{
+    string DefaultScope = 1;
+    repeated ProductScopeGrpcModel Scopes = 2;
+}
+
 message ServerInfoGrpcResponse{
     string Version = 1;
     uint32 HoursToGc = 2;
@@ -130,6 +164,11 @@ service MyLogger {
 
     rpc ScanAndSearch(ScanAndSearchRequest) returns (stream LogEventGrpcModel);
 
+    // SearchUp and SearchDown of my-logger-server are left out of this copy: both are
+    // SearchLogsRequest -> stream LogEventGrpcModel, and generate_grpc_client of
+    // my-grpc-extensions implements its executor traits by the request and response types,
+    // so the second one conflicts with the first (E0119)
+
     rpc SetIgnoreEvent(IgnoreEventGrpcModel) returns (google.protobuf.Empty);
     rpc GetIgnoreEvents(google.protobuf.Empty) returns (stream IgnoreEventGrpcModel);
     rpc DeleteIgnoreEvent(DeleteIgnoreEventGrpcRequest) returns (google.protobuf.Empty);
@@ -141,10 +180,15 @@ service MyLogger {
     rpc GetIgnoreSingleEvents(google.protobuf.Empty) returns (stream IgnoreSingleEventGrpcModel);
     rpc DeleteIgnoreSingleEvent(DeleteIgnoreSingleEventGrpcRequest) returns (google.protobuf.Empty);
 
+    // Of every product scope: a record per hour, scope and application
     rpc GetHourlyStatistics(GetHourlyStatisticsRequest) returns (stream HourlyStatisticsGrpcModel);
 
 
     rpc GetServerInfo(google.protobuf.Empty) returns (ServerInfoGrpcResponse);
+
+    // The records of Write go to the scope its "scope" metadata names - by the product scopes
+    // without it
+    rpc GetProductScopes(google.protobuf.Empty) returns (GetProductScopesResponse);
 
     rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
  }

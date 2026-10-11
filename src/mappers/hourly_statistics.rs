@@ -7,6 +7,7 @@ impl From<HourlyStatisticsGrpcModel> for HourlyStatisticsHttpModel {
         Self {
             hour_key: value.hour_key as i64,
             app: value.app,
+            scope: value.scope,
             info: value.info_count,
             warning: value.warning_count,
             error: value.error_count,

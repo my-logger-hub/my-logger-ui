@@ -26,6 +26,7 @@ pub async fn load_logs(
         skip: 0,
         levels,
         context_keys: request.ctx.into_iter().map(|itm| itm.into()).collect(),
+        product_scope: request.product_scope,
     };
 
     let result = grpc_client.read(grpc_request).await?.into_vec().await?;

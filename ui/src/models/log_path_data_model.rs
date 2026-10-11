@@ -12,6 +12,9 @@ pub struct LogPathDataModel {
     pub time_range: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
     pub search_string: ::prost::alloc::string::String,
+    /// Empty - the default product scope of the env
+    #[prost(string, tag = "5")]
+    pub product_scope: ::prost::alloc::string::String,
 }
 
 impl LogPathDataModel {

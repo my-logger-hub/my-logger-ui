@@ -44,6 +44,12 @@ pub struct LoadLogsHttpRequest {
         description = "Context key-values a log event must have. Empty - no filter"
     )]
     pub ctx: Vec<LogEventContextApiModel>,
+
+    #[http_body(
+        name = "productScope",
+        description = "Product scope to read the logs of. Absent or empty - the default one"
+    )]
+    pub product_scope: Option<String>,
 }
 
 /// `from_time` / `to_time` are passed to MyLogger server as they are - encoded the way
@@ -61,4 +67,10 @@ pub struct SearchLogsHttpRequest {
 
     #[http_body(name = "phrase", description = "Text to search for")]
     pub phrase: String,
+
+    #[http_body(
+        name = "productScope",
+        description = "Product scope to search the logs in. Absent or empty - the default one"
+    )]
+    pub product_scope: Option<String>,
 }

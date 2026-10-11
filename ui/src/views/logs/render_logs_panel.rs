@@ -3,8 +3,11 @@ use std::rc::Rc;
 use dioxus::prelude::*;
 
 use crate::{
-    dialogs::DialogState, models::LogPathDataModel, storage_settings::log_level::SelectedLevel,
-    views::logs::SelectLogLevel, *,
+    dialogs::DialogState,
+    models::LogPathDataModel,
+    storage_settings::log_level::SelectedLevel,
+    views::logs::{SelectLogLevel, SelectProductScope},
+    *,
 };
 
 use crate::models::*;
@@ -15,6 +18,25 @@ pub fn RenderLogsPanel(
     time_zone: TimeZone,
     on_refresh_click: EventHandler<SearchPanelState>,
 ) -> Element {
+    let mut main_state = consume_context::<Signal<MainState>>();
+
+    let product_scopes = match main_state.read().product_scopes.as_ref() {
+        RenderState::None => {
+            let env = env.clone();
+            spawn(async move {
+                main_state.write().product_scopes.set_loading();
+                // Without the scopes there is just nothing to choose from: the default one is read
+                match crate::api::product_scopes::get(env.to_string()).await {
+                    Ok(result) => main_state.write().product_scopes.set_value(Rc::new(result)),
+                    Err(err) => main_state.write().product_scopes.set_error(err.to_string()),
+                }
+            });
+            None
+        }
+        RenderState::Loaded(value) => Some(value.clone()),
+        RenderState::Loading | RenderState::Error(_) => None,
+    };
+
     let mut insight_keys: Signal<DataState<Vec<String>>> = use_signal(|| DataState::default());
 
     if insight_keys.read().is_none() {
@@ -50,19 +72,42 @@ pub fn RenderLogsPanel(
 
     let is_ctx_search = search_panel_state_read_access.search_type.is_ctx_search();
 
+    let product_scope = search_panel_state_read_access.product_scope.clone();
+
     let second_path = LogPathDataModel {
         is_ctx_search,
         search_string: search_panel_state_read_access.filter.clone(),
         level: crate::storage_settings::log_level::get().into(),
         time_range: time_range_value.to_string(),
+        product_scope: product_scope.clone(),
     }
     .to_base_64();
+
+    // Only when there is a scope to choose - or the one read is not the default one
+    let select_product_scope = product_scopes
+        .filter(|scopes| scopes.scopes.len() > 1 || !product_scope.is_empty())
+        .map(|scopes| {
+            rsx! {
+                td { style: "width: 150px;",
+                    div { style: "margin-top: 5px;", "Product scope" }
+                    SelectProductScope {
+                        scopes,
+                        value: product_scope.clone(),
+                        on_change: move |product_scope: String| {
+                            crate::storage_settings::product_scope::set(&product_scope);
+                            search_panel_state.write().product_scope = product_scope;
+                        },
+                    }
+                }
+            }
+        });
 
     rsx! {
 
       div { style: "position: sticky; top: 44px; z-index: 5; background: white;",
         table { style: "width: 100%; border-bottom: 1px lightgray solid; box-shadow: 0 0 5px lightgray; background: white;",
             tr {
+                {select_product_scope}
                 td { style: "width: 150px;",
                     div { style: "margin-top: 5px;", "Level" }
                     SelectLogLevel {
@@ -124,7 +169,6 @@ pub fn RenderLogsPanel(
                         onkeyup: move |e| {
                             if e.key() == Key::Enter {
                                 let search_panel = {
-                                    let mut main_state = consume_context::<Signal<MainState>>();
                                     main_state.write().logs_data.reset();
                                     search_panel_state.read().clone()
                                 };
@@ -143,7 +187,6 @@ pub fn RenderLogsPanel(
                         },
                         onclick: move |_| {
                             let search_panel = {
-                                let mut main_state = consume_context::<Signal<MainState>>();
                                 main_state.write().logs_data.reset();
                                 search_panel_state.read().clone()
                             };
@@ -167,6 +210,8 @@ pub struct SearchPanelState {
     pub filter: String,
     pub time_range: TimeRange,
     pub search_type: SearchType,
+    /// Empty - the default product scope of the env
+    pub product_scope: String,
     pub initialized: bool,
 }
 
@@ -177,11 +222,12 @@ impl SearchPanelState {
             log_level: SelectedLevel::All,
             filter: String::new(),
             time_range: TimeRange::default(),
+            product_scope: String::new(),
             initialized: false,
         }
     }
 
-    pub fn read_storage() -> (SearchType, SelectedLevel, String, TimeRange) {
+    pub fn read_storage() -> (SearchType, SelectedLevel, String, TimeRange, String) {
         let search_type = if crate::storage_settings::ctx_search::get() {
             SearchType::Ctx
         } else {
@@ -190,26 +236,29 @@ impl SearchPanelState {
         let log_level = crate::storage_settings::log_level::get();
         let filter = crate::storage_settings::search_line::get();
         let time_range = crate::storage_settings::time_range::get();
-        (search_type, log_level, filter, time_range)
+        let product_scope = crate::storage_settings::product_scope::get();
+        (search_type, log_level, filter, time_range, product_scope)
     }
 
     pub fn matches_storage(&self) -> bool {
         if !self.initialized {
             return false;
         }
-        let (search_type, log_level, filter, time_range) = Self::read_storage();
+        let (search_type, log_level, filter, time_range, product_scope) = Self::read_storage();
         self.search_type == search_type
             && self.log_level == log_level
             && self.filter == filter
             && self.time_range == time_range
+            && self.product_scope == product_scope
     }
 
     pub fn load_from_storage(&mut self) {
-        let (search_type, log_level, filter, time_range) = Self::read_storage();
+        let (search_type, log_level, filter, time_range, product_scope) = Self::read_storage();
         self.search_type = search_type;
         self.log_level = log_level;
         self.filter = filter;
         self.time_range = time_range;
+        self.product_scope = product_scope;
         self.initialized = true;
     }
 

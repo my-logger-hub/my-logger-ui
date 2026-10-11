@@ -19,6 +19,7 @@ pub struct MainState {
     pub one_time_ignore_events: DataState<Vec<Rc<OneTimeIgnoreHttpModel>>>,
     pub selected_time_zone: SelectedTimeZone,
     pub server_settings: DataState<Rc<ServerInfoHttpModel>>,
+    pub product_scopes: DataState<Rc<ProductScopesHttpModel>>,
     time_zone: TimeZone,
 }
 
@@ -35,6 +36,7 @@ impl Default for MainState {
             ignore_events: DataState::default(),
             one_time_ignore_events: DataState::default(),
             server_settings: DataState::default(),
+            product_scopes: DataState::default(),
             storage,
             time_zone: TimeZone::default(),
             selected_time_zone,
@@ -74,6 +76,9 @@ impl MainState {
         dioxus_utils::js::GlobalAppSettings::get_local_storage().set(ENV_LOCAL_STORAGE_KEY, value);
         self.reset_data();
         self.server_settings.reset();
+        // The scopes of one env are not the ones of another
+        self.product_scopes.reset();
+        crate::storage_settings::product_scope::clear();
     }
 
     pub fn get_selected_env(&self) -> Rc<String> {

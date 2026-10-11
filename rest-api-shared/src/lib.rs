@@ -12,5 +12,7 @@ mod logs;
 pub use logs::*;
 mod one_time_ignore_events;
 pub use one_time_ignore_events::*;
+mod product_scopes;
+pub use product_scopes::*;
 mod server_info;
 pub use server_info::*;
