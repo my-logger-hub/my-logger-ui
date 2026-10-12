@@ -41,28 +41,31 @@ pub fn EditTimeRangeDialog(
             class_time_ago = "btn-secondary";
 
             // A value typed in may be further than the hours are kept
-            let slider_max = hours_kept.max(v);
+            let slider_min = -hours_kept.max(v);
+            let slider_value = -v;
             let hint = hours_ago_hint(v, time_zone);
 
             rsx! {
                 div { style: "display: flex; align-items: flex-start; gap: 12px;",
                     div { style: "flex: 1; padding-top: 6px;",
-                        // `max` goes before `value`: a value past the max of the moment is cut
+                        // Now is on the right and the past is to the left of it, so the slider
+                        // goes over the hours as negative ones. `min` goes before `value`: a
+                        // value past the min of the moment is cut
                         input {
                             r#type: "range",
                             class: "form-range",
-                            min: "0",
-                            max: "{slider_max}",
+                            min: "{slider_min}",
+                            max: "0",
                             step: "1",
-                            value: "{v}",
+                            value: "{slider_value}",
                             oninput: move |e| {
                                 let value = e.value().parse::<i32>().unwrap_or(0);
                                 time_range_state.write().set_hours_ago(value);
                             },
                         }
                         div { style: "display: flex; justify-content: space-between; font-size: 11px; color: gray;",
+                            span { "{slider_min}" }
                             span { "0" }
-                            span { "{slider_max}" }
                         }
                     }
                     input {
