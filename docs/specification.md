@@ -40,6 +40,8 @@ Swagger: `/swagger`. Every endpoint but `app/v1/info` takes the env (`env`) and 
 | `GET /api/ignore-events/v1/list?env=`, `POST .../add`, `POST .../delete` | The ignore events |
 | `GET /api/one-time-ignore-events/v1/list?env=`, `POST .../save`, `POST .../delete` | The one time ignore events |
 
+The answers of `load` and `search` are gzipped (`Content-Encoding: gzip`, `Vary: Accept-Encoding`) when the request's `Accept-Encoding` takes `gzip` and the JSON is over 1 KiB — through `with_compression` of my-http-server, which keeps the gzip only when it is 20% smaller at least.
+
 `fromTime` / `toTime` of `load` and `search` are passed to MyLogger server as they are, encoded by the time-range contract of [my-logger-server](https://github.com/my-logger-hub/my-logger-server/blob/main/docs/specification.md#time-range-contract).
 
 ## Product scopes

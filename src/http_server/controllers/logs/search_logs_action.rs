@@ -31,8 +31,8 @@ impl SearchLogsAction {
 async fn handle_request(
     action: &SearchLogsAction,
     input_data: SearchLogsHttpRequest,
-    _ctx: &HttpContext,
+    ctx: &HttpContext,
 ) -> Result<HttpOkResult, HttpFailResult> {
     let result = crate::flows::search_logs(&action.app, input_data).await?;
-    HttpOutput::as_json(result).into_ok_result(true)
+    super::log_events_result(ctx, result)
 }

@@ -31,8 +31,8 @@ impl LoadLogsAction {
 async fn handle_request(
     action: &LoadLogsAction,
     input_data: LoadLogsHttpRequest,
-    _ctx: &HttpContext,
+    ctx: &HttpContext,
 ) -> Result<HttpOkResult, HttpFailResult> {
     let result = crate::flows::load_logs(&action.app, input_data).await?;
-    HttpOutput::as_json(result).into_ok_result(true)
+    super::log_events_result(ctx, result)
 }
