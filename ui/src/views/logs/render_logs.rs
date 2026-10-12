@@ -89,6 +89,12 @@ pub fn RenderLogs() -> Element {
         let dt = time_zone.to_local_time(dt_utc);
         let ago = format_duration_ago(now, dt_utc);
 
+        // "2026-10-12T16:52:04.561943Z" -> the date and the time, a line each. The width is
+        // fixed here, `to_rfc3339` drops the zeros at the end of the fraction
+        let dt_as_string = dt.to_rfc3339_utc();
+        let date = dt_as_string[..10].to_string();
+        let time = dt_as_string[11..26].to_string();
+
         let key_values: Vec<_> = itm
             .ctx
             .iter()
@@ -116,8 +122,13 @@ pub fn RenderLogs() -> Element {
             tr { style: "border-top: 1px solid lightgray;",
                 td { {log_ball} }
                 td { style: "margin:0;padding:0",
-                    div { "{&dt.to_rfc3339()[..26]}" }
-                    div { style: "font-size: 11px; color: gray;", "{ago} ago" }
+                    // One block for the three lines: the cell padding of `.table` lands on
+                    // the direct children of a td
+                    div {
+                        div { "{date}" }
+                        div { "{time}" }
+                        div { style: "font-size: 11px; color: gray;", "{ago} ago" }
+                    }
                 }
                 td { style: "margin:0;padding:0",
                     div {
