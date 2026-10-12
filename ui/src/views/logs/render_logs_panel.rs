@@ -22,18 +22,11 @@ pub fn RenderLogsPanel(
 
     let product_scopes = match main_state.read().product_scopes.as_ref() {
         RenderState::None => {
-            let env = env.clone();
-            spawn(async move {
-                main_state.write().product_scopes.set_loading();
-                // Without the scopes there is just nothing to choose from: the default one is read
-                match crate::api::product_scopes::get(env.to_string()).await {
-                    Ok(result) => main_state.write().product_scopes.set_value(Rc::new(result)),
-                    Err(err) => main_state.write().product_scopes.set_error(err.to_string()),
-                }
-            });
+            load_product_scopes(env.clone(), main_state);
             None
         }
         RenderState::Loaded(value) => Some(value.clone()),
+        // Without the scopes there is just nothing to choose from: the default one is read
         RenderState::Loading | RenderState::Error(_) => None,
     };
 
@@ -94,7 +87,7 @@ pub fn RenderLogsPanel(
                         scopes,
                         value: product_scope.clone(),
                         on_change: move |product_scope: String| {
-                            crate::storage_settings::product_scope::set(&product_scope);
+                            main_state.write().set_product_scope(&product_scope);
                             search_panel_state.write().product_scope = product_scope;
                         },
                     }

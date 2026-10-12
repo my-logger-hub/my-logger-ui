@@ -13,3 +13,5 @@ mod ignore_lists;
 pub use ignore_lists::*;
 mod settings;
 pub use settings::*;
+mod load_product_scopes;
+pub use load_product_scopes::*;

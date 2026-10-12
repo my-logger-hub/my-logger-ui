@@ -48,13 +48,17 @@ The answers of `load` and `search` are gzipped (`Content-Encoding: gzip`, `Vary:
 
 MyLogger server keeps and searches the logs by product scope; its specification says how a record gets its scope.
 
-**Logs.** A load or a search reads one scope: `productScope` of the request, the default scope of the env when it is absent or empty. The scope to read is chosen next to the level:
+One scope is shown at a time, on the dashboard and in the logs alike:
 
-- the choice is shown when the env has more than one scope, or when the scope read is not the default one — a link may name a scope the env does not list, and it is shown as it is;
 - the default scope is kept as none, so the env decides which one it is;
-- the scope is a part of the logs url and is kept in the local storage (`product-scope`); changing the env clears it.
+- the scope chosen is kept in the local storage (`product-scope`): the dashboard and the logs open in the one chosen last, in either of them. Changing the env clears it;
+- a link may name a scope the env does not list, and it is shown as it is.
 
-**Dashboard.** The statistics are of every scope. A row is an application of a scope: an application whose logs went to several scopes has a row per scope, and its scope is shown under its name when the hours shown have more than one scope. The Errors / Fatal errors / Warnings links open the logs of the application in its scope. The rows of an hour go by the errors and the fatal errors, the most first.
+**Logs.** A load or a search reads one scope: `productScope` of the request, the default scope of the env when it is absent or empty. The scope to read is chosen next to the level; the choice is shown when the env has more than one scope, or when the scope read is not the default one. The scope is a part of the logs url.
+
+**Dashboard.** `GetHourlyStatistics` gives the statistics of every scope, and they are shown by scope — a tab per scope: the scopes of the env as `GetProductScopes` lists them, then the ones only the statistics have. The tabs are shown when there is more than one scope; a tab has the errors and the fatal errors of its scope over the hours shown. The chart and the applications are of the scope chosen, and the chart of every scope goes over the same hours. The Errors / Fatal errors / Warnings links open the logs of the application in that scope. The rows of an hour go by the errors and the fatal errors, the most first.
+
+**Settings.** The scopes of the env with the regular expressions of their applications — the rules a record gets its scope by — as `GetProductScopes` lists them. They are set through MCP of MyLogger server: the UI only shows them.
 
 ## Logs url
 

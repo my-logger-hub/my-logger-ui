@@ -20,6 +20,9 @@ pub struct MainState {
     pub selected_time_zone: SelectedTimeZone,
     pub server_settings: DataState<Rc<ServerInfoHttpModel>>,
     pub product_scopes: DataState<Rc<ProductScopesHttpModel>>,
+    /// The product scope the dashboard shows - the one of the local storage, which the logs
+    /// are read from as well. Empty - the default one of the env
+    pub product_scope: String,
     time_zone: TimeZone,
 }
 
@@ -37,6 +40,7 @@ impl Default for MainState {
             one_time_ignore_events: DataState::default(),
             server_settings: DataState::default(),
             product_scopes: DataState::default(),
+            product_scope: crate::storage_settings::product_scope::get(),
             storage,
             time_zone: TimeZone::default(),
             selected_time_zone,
@@ -78,7 +82,12 @@ impl MainState {
         self.server_settings.reset();
         // The scopes of one env are not the ones of another
         self.product_scopes.reset();
-        crate::storage_settings::product_scope::clear();
+        self.set_product_scope("");
+    }
+
+    pub fn set_product_scope(&mut self, product_scope: &str) {
+        crate::storage_settings::product_scope::set(product_scope);
+        self.product_scope = product_scope.to_string();
     }
 
     pub fn get_selected_env(&self) -> Rc<String> {

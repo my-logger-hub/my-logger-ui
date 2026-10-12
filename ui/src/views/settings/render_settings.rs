@@ -2,6 +2,8 @@ use dioxus::prelude::*;
 
 use crate::{storage_settings::selected_time_zone::SelectedTimeZone, MainState};
 
+use super::RenderProductScopes;
+
 #[component]
 pub fn RenderSettings() -> Element {
     let mut main_state = consume_context::<Signal<MainState>>();
@@ -47,5 +49,7 @@ pub fn RenderSettings() -> Element {
                 }
             }
         }
+
+        div { style: "padding: 10px;", RenderProductScopes {} }
     }
 }
